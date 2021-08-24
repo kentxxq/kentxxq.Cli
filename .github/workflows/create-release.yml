@@ -1,0 +1,29 @@
+name: check-net6-single-file
+on: [push]
+jobs:
+  linux-x64-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+
+      - name: build
+        run: | 
+          dotnet publish -r linux-x64 -c Release -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
+          ls -lh bin/Release/net6.0/linux-x64/publish/hello-world
+
+      - name: create-release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.CREATE_RELEASE_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: false
+          title: "Development Build"
+          files: |
+            bin/Release/net6.0/linux-x64/publish/ken
