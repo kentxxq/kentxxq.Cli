@@ -10,7 +10,7 @@ namespace Cli.Commands.ken_ws
 {
     internal static class WebSocketCommand
     {
-        private static readonly Argument<Uri> wsUrl = new("wsUrl", "wsUrl: wss://echo.kenxxq.com/ws");
+        private static readonly Argument<Uri> wsUrl = new("wsUrl", "wsUrl: wss://ws.kentxxq.com/ws");
 
         // private static readonly Option<string> wsUrl2 = new(new[] { "-n", "-nn" }, () => "qwer", "qwer");
 
