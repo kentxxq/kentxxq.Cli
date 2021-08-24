@@ -23,6 +23,6 @@ jobs:
           repo_token: "${{ secrets.CREATE_RELEASE_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: false
-          title: "Development Build"
+          title: "latest"
           files: |
             src/Cli/bin/Release/net5.0/linux-x64/publish/ken
