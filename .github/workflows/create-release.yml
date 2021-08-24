@@ -16,7 +16,6 @@ jobs:
       - name: build
         run: | 
           dotnet publish -r linux-x64 -c Release -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
-          ls -lh bin/Release/net6.0/linux-x64/publish/hello-world
 
       - name: create-release
         uses: "marvinpinto/action-automatic-releases@latest"
