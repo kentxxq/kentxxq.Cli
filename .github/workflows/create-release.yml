@@ -15,7 +15,7 @@ jobs:
       - name: setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '5.0.x'
+          dotnet-version: '6.0.x'
           include-prerelease: true
 
       - name: build
@@ -30,4 +30,4 @@ jobs:
           prerelease: false
           title: "latest"
           files: |
-            src/Cli/bin/Release/net5.0/linux-x64/publish/ken
+            src/Cli/bin/Release/net6.0/linux-x64/publish/ken
