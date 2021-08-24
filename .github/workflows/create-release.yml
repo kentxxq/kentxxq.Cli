@@ -1,4 +1,4 @@
-name: check-net6-single-file
+name: create-release
 on:
   push:
     branches:
@@ -25,7 +25,7 @@ jobs:
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.CREATE_RELEASE_TOKEN }}"
-          #automatic_release_tag: "latest"
+          automatic_release_tag: "latest"
           prerelease: false
           title: "latest"
           files: |
