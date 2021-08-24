@@ -51,7 +51,7 @@ namespace Cli.Commands.ken_ws
             while (true)
             {
                 Console.Write(">> ");
-                input = Console.ReadLine();
+                input = Console.ReadLine() ?? "";
                 await ws.SendAsync(Encoding.UTF8.GetBytes(input), WebSocketMessageType.Text, true, CancellationToken.None);
                 var result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                 var text = Encoding.UTF8.GetString(buffer);
