@@ -6,7 +6,7 @@ on:
       - "test"
 
 jobs:
-  linux-x64-test:
+  create-release-x64:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -34,5 +34,5 @@ jobs:
           title: "latest"
           files: |
             src/Cli/bin/Release/net5.0/linux-x64/publish/ken
-            src/Cli/bin/Release/net5.0/win-x64/publish/ken
+            src/Cli/bin/Release/net5.0/win-x64/publish/ken.exe
             src/Cli/bin/Release/net5.0/osx-x64/publish/ken
