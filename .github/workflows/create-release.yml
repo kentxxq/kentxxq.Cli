@@ -25,4 +25,4 @@ jobs:
           prerelease: false
           title: "Development Build"
           files: |
-            bin/Release/net6.0/linux-x64/publish/ken
+            src/Cli/bin/Release/net6.0/linux-x64/publish/ken
