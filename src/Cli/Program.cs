@@ -13,10 +13,10 @@ namespace Cli
             var rootCommand = new RootCommand();
             rootCommand.AddCommand(SocketPingCommand.GetCommand());
             rootCommand.AddCommand(WebSocketCommand.GetCommand());
-            //await rootCommand.InvokeAsync(new string[] { "sp", "baidu.com:443", "-n 3" });
 #if DEBUG
             //await rootCommand.InvokeAsync(new string[] { "sp", "baidu.com:443", "-n 3" });
-            await rootCommand.InvokeAsync(new string[] { "ws", "baidu.com:443" });
+            //await rootCommand.InvokeAsync(new string[] { "ws", "wss://ws.kenxxq.com/ws" });
+            await rootCommand.InvokeAsync(new string[] { "ws", "wss://ws.kentxxq.com/ws" });
 #else
             await rootCommand.InvokeAsync(args);
 #endif
