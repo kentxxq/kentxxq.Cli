@@ -20,9 +20,9 @@ jobs:
 
       - name: build
         run: | 
-          dotnet publish -r linux-x64 -c Release -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
-          dotnet publish -r win-x64 -c Release -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-          dotnet publish -r osx-x64 -c Release -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
+          dotnet publish -r linux-x64 -c Release -p:AssemblyName=ken-linux-x64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
+          dotnet publish -r win-x64 -c Release -p:AssemblyName=ken-win-x64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
+          dotnet publish -r osx-x64 -c Release -p:AssemblyName=ken-osx-x64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
 
 
       - name: create-release
@@ -33,6 +33,6 @@ jobs:
           prerelease: false
           title: "latest"
           files: |
-            src/Cli/bin/Release/net5.0/linux-x64/publish/ken
-            src/Cli/bin/Release/net5.0/win-x64/publish/ken.exe
-            src/Cli/bin/Release/net5.0/osx-x64/publish/ken
+            src/Cli/bin/Release/net5.0/linux-x64/publish/ken-linux-x64
+            src/Cli/bin/Release/net5.0/win-x64/publish/ken-win-x64.exe
+            src/Cli/bin/Release/net5.0/osx-x64/publish/ken-osx-x64
