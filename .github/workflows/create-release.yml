@@ -1,5 +1,9 @@
 name: check-net6-single-file
-on: [push]
+on:
+  push:
+    branches:
+      - "master"
+
 jobs:
   linux-x64-test:
     runs-on: ubuntu-latest
