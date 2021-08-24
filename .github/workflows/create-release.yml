@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - "master"
+      - "test"
 
 jobs:
   linux-x64-test:
