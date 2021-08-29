@@ -6,36 +6,38 @@ using System.CommandLine.Rendering;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using Cli.Extensions;
 using kentxxq.Extensions.String;
 
 namespace Cli.Commands.ken_sp
 {
-    internal static class SocketPingCommand
+    internal class SocketPingCommand
     {
         private static readonly Argument<string> Url = new("url", "url: kentxxq.com:443");
 
-        private static readonly Option<int> RetryTimes = new(new[] { "-n", "--retryTimes" }, () => 0, "default:0,retry forever");
-
-        private static readonly Option<int> Timeout = new(new[] { "-t", "--timeout" }, () => 2, "default:2 seconds");
-
-        private static readonly Option<bool> Quit = new(new[] { "-q", "--quit" }, () => false, "Quit after connection succeeded");
-
-
         public static Command GetCommand()
         {
-            var command = new Command("sp");
-            command.AddArgument(Url);
-            command.AddOption(RetryTimes);
-            command.AddOption(Timeout);
-            command.AddOption(Quit);
+            var command = new Command("sp") {
+                new Argument<string>("url",
+                                     "url: kentxxq.com:443"),
+                new Option<int>(new[]{"-n", "--retryTimes"},
+                                ()=>0,
+                                "default:0,retry forever"),
+                new Option<int>(new[] { "-t", "--timeout" },
+                                () => 2,
+                                "default:2 seconds"),
+                new Option<bool>(new[] { "-q", "--quit" },
+                                 () => false,
+                                 "Quit after connection succeeded")
+            };
 
-            command.Handler = CommandHandler.Create<string, int, int, bool>(Run);
+            command.Handler = CommandHandler.Create<string, SocketPingOptions, CancellationToken>(Run);
             return command;
         }
 
 
-        private static void Run(string url, int retryTimes, int timeout, bool quit)
+        private static int Run(string url, SocketPingOptions socketPingOptions, CancellationToken ct)
         {
             var ipEndPoint = url.UrlToIPEndPoint();
             bool result;
@@ -43,52 +45,65 @@ namespace Cli.Commands.ken_sp
             var console = new SystemConsole();
             var consoleRender = new ConsoleRenderer(console, OutputMode.Ansi, true);
 
-            if (retryTimes == 0)
+            if (socketPingOptions.RetryTimes == 0)
             {
-                while (true)
+                while (!ct.IsCancellationRequested)
                 {
-                    result = Connect(ipEndPoint, timeout, consoleRender);
-                    if (result && quit)
+                    result = Connect(ipEndPoint, socketPingOptions.Timeout, consoleRender, ct);
+                    if (result && socketPingOptions.Quit)
                     {
-                        Environment.Exit(0);
+                        return 0;
                     }
                 }
+                return 1;
             }
             else
             {
-                for (var i = 0; i < retryTimes; i++)
+                for (var i = 0; i < socketPingOptions.RetryTimes; i++)
                 {
-                    result = Connect(ipEndPoint, timeout, consoleRender);
-                    if (result && quit)
+                    result = Connect(ipEndPoint, socketPingOptions.Timeout, consoleRender, ct);
+                    if (result && socketPingOptions.Quit)
                     {
-                        Environment.Exit(0);
+                        return 0;
+                    }
+                    else if (ct.IsCancellationRequested)
+                    {
+                        return 1;
                     }
                 }
-                Environment.Exit(1);
+                return 1;
             }
 
         }
 
-        private static bool Connect(IPEndPoint ipEndPoint, int timeout, ConsoleRenderer consoleRender)
+        private static bool Connect(IPEndPoint ipEndPoint, int timeout, ConsoleRenderer consoleRender, CancellationToken token)
         {
             var region = Region.EntireTerminal;
-
             using var tcp = new TcpClient();
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var result = tcp.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port).Wait(timeout * 1000);
-            stopwatch.Stop();
 
-            if (result)
+            try
             {
-                consoleRender.RenderToRegion($"request { "successed".Color(ForegroundColorSpan.Green())}. waited { stopwatch.ElapsedMilliseconds} ms", region);
+                tcp.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port).Wait(timeout * 1000, token);
+                stopwatch.Stop();
+
+                if (tcp.Connected)
+                {
+                    consoleRender.RenderToRegion($"request { "successed".Color(ForegroundColorSpan.Green())}. waited { stopwatch.ElapsedMilliseconds} ms", region);
+                }
+                else
+                {
+                    consoleRender.RenderToRegion($"request { "failed".Color(ForegroundColorSpan.Red())}. waited { stopwatch.ElapsedMilliseconds} ms", region);
+                }
+                Console.WriteLine("");
             }
-            else
+            catch (OperationCanceledException)
             {
-                consoleRender.RenderToRegion($"request { "failed".Color(ForegroundColorSpan.Red())}. waited { stopwatch.ElapsedMilliseconds} ms", region);
+                Console.WriteLine("操作取消");
             }
-            Console.WriteLine("");
-            return result;
+
+            return tcp.Connected;
         }
 
     }

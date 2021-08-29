@@ -47,13 +47,13 @@ namespace Cli.Commands.ken_ws
             //ws.Options.RemoteCertificateValidationCallback = delegate { return true; };
             await ws.ConnectAsync(wsUrl, CancellationToken.None);
             var buffer = new byte[1024 * 4];
-            string input = "";
+            string input;
             while (true)
             {
                 Console.Write(">> ");
                 input = Console.ReadLine() ?? "";
                 await ws.SendAsync(Encoding.UTF8.GetBytes(input), WebSocketMessageType.Text, true, CancellationToken.None);
-                var result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                 var text = Encoding.UTF8.GetString(buffer);
                 Console.WriteLine($"<< {text}");
                 Array.Clear(buffer, 0, buffer.Length);
