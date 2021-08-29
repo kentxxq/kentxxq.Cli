@@ -21,11 +21,11 @@ namespace Cli.Commands.ken_ws
             command.AddArgument(wsUrl);
             // command.AddOption(wsUrl2);
 
-            command.Handler = CommandHandler.Create<Uri>(Run2);
+            command.Handler = CommandHandler.Create<Uri, CancellationToken>(Run2);
             return command;
         }
 
-        private static async Task Run2(Uri wsUrl)
+        private static async Task Run2(Uri wsUrl, CancellationToken ct)
         {
             //var console = new SystemConsole();
             //var render = new ConsoleRenderer(console, OutputMode.Ansi, true);
@@ -45,15 +45,15 @@ namespace Cli.Commands.ken_ws
             Console.WriteLine($"url: {wsUrl}");
             var ws = new ClientWebSocket();
             //ws.Options.RemoteCertificateValidationCallback = delegate { return true; };
-            await ws.ConnectAsync(wsUrl, CancellationToken.None);
+            await ws.ConnectAsync(wsUrl, ct);
             var buffer = new byte[1024 * 4];
             string input;
-            while (true)
+            while (!ct.IsCancellationRequested)
             {
                 Console.Write(">> ");
                 input = Console.ReadLine() ?? "";
-                await ws.SendAsync(Encoding.UTF8.GetBytes(input), WebSocketMessageType.Text, true, CancellationToken.None);
-                await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                await ws.SendAsync(Encoding.UTF8.GetBytes(input), WebSocketMessageType.Text, true, ct);
+                await ws.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
                 var text = Encoding.UTF8.GetString(buffer);
                 Console.WriteLine($"<< {text}");
                 Array.Clear(buffer, 0, buffer.Length);

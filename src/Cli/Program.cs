@@ -29,7 +29,8 @@ namespace Cli
                   })
                   .UseDefaults()
                   .Build()
-                  .InvokeAsync(new string[] { "sp", "baidu.com:443", "-t 2", "-n 10", });
+                  .InvokeAsync(new string[] { "ws", "wss://ws.kentxxq.com/ws" });
+            //.InvokeAsync(new string[] { "sp", "baidu.com:443", "-t 2", "-n 10", });
             System.Console.WriteLine(result);
 #else
             await BuildCommandLine()
