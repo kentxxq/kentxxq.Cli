@@ -38,7 +38,6 @@ namespace Cli.Commands.ken_ws
             //{
             //    render.RenderToRegion(input, Region.EntireTerminal);
             //}
-            Console.WriteLine($"url: {wsUrl}");
             var ws = new ClientWebSocket();
             //ws.Options.RemoteCertificateValidationCallback = delegate { return true; };
             try
