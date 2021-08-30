@@ -12,14 +12,10 @@ namespace Cli.Commands.ken_ws
     {
         private static readonly Argument<Uri> wsUrl = new("wsUrl", "wsUrl: wss://ws.kentxxq.com/ws");
 
-        // private static readonly Option<string> wsUrl2 = new(new[] { "-n", "-nn" }, () => "qwer", "qwer");
-
-
         public static Command GetCommand()
         {
             var command = new Command("ws");
             command.AddArgument(wsUrl);
-            // command.AddOption(wsUrl2);
 
             command.Handler = CommandHandler.Create<Uri, CancellationToken>(Run2);
             return command;
@@ -45,7 +41,16 @@ namespace Cli.Commands.ken_ws
             Console.WriteLine($"url: {wsUrl}");
             var ws = new ClientWebSocket();
             //ws.Options.RemoteCertificateValidationCallback = delegate { return true; };
-            await ws.ConnectAsync(wsUrl, ct);
+            try
+            {
+                await ws.ConnectAsync(wsUrl, ct);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"连接失败:{e.Message}");
+                return;
+            }
+
             var buffer = new byte[1024 * 4];
             string input;
             while (!ct.IsCancellationRequested)

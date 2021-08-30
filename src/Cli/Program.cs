@@ -15,7 +15,7 @@ namespace Cli
 
         static async Task Main(string[] args)
         {
-#if DEBUG
+
             var result = await BuildCommandLine()
                   .UseHost(_ => Host.CreateDefaultBuilder(), builder =>
                   {
@@ -29,22 +29,14 @@ namespace Cli
                   })
                   .UseDefaults()
                   .Build()
-                  .InvokeAsync(new string[] { "ws", "wss://ws.kentxxq.com/ws" });
-            //.InvokeAsync(new string[] { "sp", "baidu.com:443", "-t 2", "-n 10", });
-            System.Console.WriteLine(result);
+#if DEBUG
+            //.InvokeAsync(new string[] { "ws", "wss://ws.kentxxq.com/ws" });
+            .InvokeAsync(new string[] { "sp", "kentxxq:443", "-t 2", "-n 10", });
 #else
-            await BuildCommandLine()
-                  .UseHost(_ => Host.CreateDefaultBuilder(), builder =>
-                  {
-                      builder.ConfigureServices(service =>
-                      {
-
-                      });
-                  })
-                  .UseDefaults()
-                  .Build()
                   .InvokeAsync(args);
 #endif
+            //System.Console.WriteLine(result);
+
         }
 
         private static CommandLineBuilder BuildCommandLine()
