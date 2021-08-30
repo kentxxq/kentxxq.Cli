@@ -14,8 +14,6 @@ namespace Cli.Commands.ken_sp
 {
     internal class SocketPingCommand
     {
-        private static readonly Argument<string> Url = new("url", "url: kentxxq.com:443");
-
         public static Command GetCommand()
         {
             var command = new Command("sp") {
@@ -39,11 +37,21 @@ namespace Cli.Commands.ken_sp
 
         private static int Run(string url, SocketPingOptions socketPingOptions, CancellationToken ct)
         {
-            var ipEndPoint = url.UrlToIPEndPoint();
+            IPEndPoint ipEndPoint = null!;
             bool result;
-
             var console = new SystemConsole();
             var consoleRender = new ConsoleRenderer(console, OutputMode.Ansi, true);
+
+            try
+            {
+                ipEndPoint = url.UrlToIPEndPoint();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"parse error:{e.Message}");
+                return 1;
+            }
+
 
             if (socketPingOptions.RetryTimes == 0)
             {
@@ -101,6 +109,10 @@ namespace Cli.Commands.ken_sp
             catch (OperationCanceledException)
             {
                 Console.WriteLine("操作取消");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"连接失败:{e.Message}");
             }
 
             return tcp.Connected;
