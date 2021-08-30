@@ -31,7 +31,7 @@ namespace Cli
                   .Build()
 #if DEBUG
             //.InvokeAsync(new string[] { "ws", "wss://ws.kentxxq.com/ws" });
-            .InvokeAsync(new string[] { "sp", "kentxxq:443", "-t 2", "-n 10", });
+            .InvokeAsync(new string[] { "sp", "kentxxq.com:443", "-t 2", "-n 10", });
 #else
                   .InvokeAsync(args);
 #endif
