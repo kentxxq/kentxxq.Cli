@@ -1,10 +1,13 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Hosting;
+using System.CommandLine.IO;
 using System.CommandLine.Parsing;
+using System.CommandLine.Rendering;
 using System.Threading.Tasks;
 using Cli.Commands.ken_sp;
 using Cli.Commands.ken_ws;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -24,7 +27,9 @@ namespace Cli
                                                             .AddFilter("Microsoft", LogLevel.Error));
                       builder.ConfigureServices(service =>
                       {
-
+                          var console = new SystemConsole();
+                          var consoleRender = new ConsoleRenderer(console, OutputMode.Ansi, true);
+                          service.AddSingleton(consoleRender);
                       });
                   })
                   .UseDefaults()
