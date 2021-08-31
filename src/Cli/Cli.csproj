@@ -14,4 +14,9 @@
     <PackageReference Include="System.CommandLine.Rendering" Version="0.3.0-alpha.21216.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Interfaces\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>

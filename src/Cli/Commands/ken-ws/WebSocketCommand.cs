@@ -1,10 +1,14 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.CommandLine.Rendering;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cli.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Cli.Commands.ken_ws
 {
@@ -17,11 +21,11 @@ namespace Cli.Commands.ken_ws
             var command = new Command("ws");
             command.AddArgument(wsUrl);
 
-            command.Handler = CommandHandler.Create<Uri, CancellationToken>(Run2);
+            command.Handler = CommandHandler.Create<Uri, CancellationToken, IHost>(Run);
             return command;
         }
 
-        private static async Task Run2(Uri wsUrl, CancellationToken ct)
+        private static async Task Run(Uri wsUrl, CancellationToken ct, IHost host)
         {
             //var console = new SystemConsole();
             //var render = new ConsoleRenderer(console, OutputMode.Ansi, true);
@@ -38,6 +42,7 @@ namespace Cli.Commands.ken_ws
             //{
             //    render.RenderToRegion(input, Region.EntireTerminal);
             //}
+            var render = host.Services.GetService<ConsoleRenderer>();
             var ws = new ClientWebSocket();
             //ws.Options.RemoteCertificateValidationCallback = delegate { return true; };
             try
@@ -46,7 +51,7 @@ namespace Cli.Commands.ken_ws
             }
             catch (Exception e)
             {
-                Console.WriteLine($"连接失败:{e.Message}");
+                render.RenderToRegion($"连接失败:{e.Message}".Color(ForegroundColorSpan.Red()), Region.EntireTerminal);
                 return;
             }
 
@@ -57,9 +62,10 @@ namespace Cli.Commands.ken_ws
                 Console.Write(">> ");
                 input = Console.ReadLine() ?? "";
                 await ws.SendAsync(Encoding.UTF8.GetBytes(input), WebSocketMessageType.Text, true, ct);
+
                 await ws.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
                 var text = Encoding.UTF8.GetString(buffer);
-                Console.WriteLine($"<< {text}");
+                render.RenderSuccess($"<< {text}");
                 Array.Clear(buffer, 0, buffer.Length);
             }
         }

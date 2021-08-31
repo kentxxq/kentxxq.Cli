@@ -1,7 +1,6 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.CommandLine.IO;
 using System.CommandLine.Rendering;
 using System.Diagnostics;
 using System.Net;
@@ -9,10 +8,12 @@ using System.Net.Sockets;
 using System.Threading;
 using Cli.Extensions;
 using kentxxq.Extensions.String;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Cli.Commands.ken_sp
 {
-    internal class SocketPingCommand
+    public class SocketPingCommand
     {
         public static Command GetCommand()
         {
@@ -30,17 +31,16 @@ namespace Cli.Commands.ken_sp
                                  "Quit after connection succeeded")
             };
 
-            command.Handler = CommandHandler.Create<string, SocketPingOptions, CancellationToken>(Run);
+            command.Handler = CommandHandler.Create<string, SocketPingOptions, CancellationToken, IHost>(Run);
             return command;
         }
 
 
-        private static int Run(string url, SocketPingOptions socketPingOptions, CancellationToken ct)
+        private static int Run(string url, SocketPingOptions socketPingOptions, CancellationToken ct, IHost host)
         {
             IPEndPoint ipEndPoint = null!;
             bool result;
-            var console = new SystemConsole();
-            var consoleRender = new ConsoleRenderer(console, OutputMode.Ansi, true);
+            var render = host.Services.GetService<ConsoleRenderer>();
 
             try
             {
@@ -48,7 +48,7 @@ namespace Cli.Commands.ken_sp
             }
             catch (Exception e)
             {
-                Console.WriteLine($"parse error:{e.Message}");
+                render.RenderError($"parse error:{e.Message}");
                 return 1;
             }
 
@@ -57,7 +57,7 @@ namespace Cli.Commands.ken_sp
             {
                 while (!ct.IsCancellationRequested)
                 {
-                    result = Connect(ipEndPoint, socketPingOptions.Timeout, consoleRender, ct);
+                    result = Connect(ipEndPoint, socketPingOptions.Timeout, render, ct);
                     if (result && socketPingOptions.Quit)
                     {
                         return 0;
@@ -69,7 +69,7 @@ namespace Cli.Commands.ken_sp
             {
                 for (var i = 0; i < socketPingOptions.RetryTimes; i++)
                 {
-                    result = Connect(ipEndPoint, socketPingOptions.Timeout, consoleRender, ct);
+                    result = Connect(ipEndPoint, socketPingOptions.Timeout, render, ct);
                     if (result && socketPingOptions.Quit)
                     {
                         return 0;
@@ -84,9 +84,8 @@ namespace Cli.Commands.ken_sp
 
         }
 
-        private static bool Connect(IPEndPoint ipEndPoint, int timeout, ConsoleRenderer consoleRender, CancellationToken token)
+        private static bool Connect(IPEndPoint ipEndPoint, int timeout, ConsoleRenderer render, CancellationToken token)
         {
-            var region = Region.EntireTerminal;
             using var tcp = new TcpClient();
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -98,21 +97,21 @@ namespace Cli.Commands.ken_sp
 
                 if (tcp.Connected)
                 {
-                    consoleRender.RenderToRegion($"request { "successed".Color(ForegroundColorSpan.Green())}. waited { stopwatch.ElapsedMilliseconds} ms", region);
+                    render.RenderToRegion($"request { "successed".Color(ForegroundColorSpan.Green())}. waited { stopwatch.ElapsedMilliseconds} ms", Region.EntireTerminal);
                 }
                 else
                 {
-                    consoleRender.RenderToRegion($"request { "failed".Color(ForegroundColorSpan.Red())}. waited { stopwatch.ElapsedMilliseconds} ms", region);
+                    render.RenderToRegion($"request { "failed".Color(ForegroundColorSpan.Red())}. waited { stopwatch.ElapsedMilliseconds} ms", Region.EntireTerminal);
                 }
                 Console.WriteLine("");
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("操作取消");
+                render.RenderError("操作取消");
             }
             catch (Exception e)
             {
-                Console.WriteLine($"连接失败:{e.Message}");
+                render.RenderError($"连接失败:{e.Message}");
             }
 
             return tcp.Connected;
