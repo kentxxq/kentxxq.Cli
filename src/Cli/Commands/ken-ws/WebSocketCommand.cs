@@ -5,6 +5,7 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Rendering;
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -57,6 +58,9 @@ namespace Cli.Commands.ken_ws
 
             var buffer = new byte[1024 * 4];
             string input;
+            Console.CancelKeyPress += (sender, eventArgs) => {
+                Process.GetCurrentProcess().Kill();
+                };
             while (!ct.IsCancellationRequested)
             {
                 Console.Write(">> ");
