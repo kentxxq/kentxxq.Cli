@@ -50,3 +50,22 @@ jobs:
             #src/Cli/bin/Release/net5.0/win-arm64/publish/ken-win-arm64.exe
             #src/Cli/bin/Release/net5.0/osx-x64/publish/ken-osx-x64
             #src/Cli/bin/Release/net5.0/osx-arm64/publish/ken-osx-arm64
+
+
+      - name: push qiniu
+        run: |
+          curl -L -o qrsctl https://devtools.qiniu.com/linux/amd64/qrsctl?ref=developer.qiniu.com
+          chmod +x qrsctl
+          ./qrsctl login ${secrets.QN_USERNAME} ${secrets.QN_PASSWORD} 
+          qrsctl put -c kentxxq ken-linux-x64 src/Cli/bin/Release/net5.0/linux-x64/publish/ken-linux-x64
+          qrsctl put -c kentxxq ken-linux-musl-x64 src/Cli/bin/Release/net5.0/linux-musl-x64/publish/ken-linux-musl-x64
+          qrsctl put -c kentxxq ken-linux-arm src/Cli/bin/Release/net5.0/linux-arm/publish/ken-linux-arm
+          qrsctl put -c kentxxq ken-linux-arm64 src/Cli/bin/Release/net5.0/linux-arm64/publish/ken-linux-arm64
+          #qrsctl put -c kentxxq ken-win-x64.exe src/Cli/bin/Release/net5.0/win-x64/publish/ken-win-x64.exe
+          #qrsctl put -c kentxxq ken-win-x86.exe src/Cli/bin/Release/net5.0/win-x86/publish/ken-win-x86.exe
+          #qrsctl put -c kentxxq ken-win-arm.exe src/Cli/bin/Release/net5.0/win-arm/publish/ken-win-arm.exe
+          #qrsctl put -c kentxxq ken-win-arm64.exe src/Cli/bin/Release/net5.0/win-arm64/publish/ken-win-arm64.exe
+          #qrsctl put -c kentxxq ken-osx-x64 src/Cli/bin/Release/net5.0/osx-x64/publish/ken-osx-x64
+          #qrsctl put -c kentxxq ken-osx-arm64 src/Cli/bin/Release/net5.0/osx-arm64/publish/ken-osx-arm64
+
+
