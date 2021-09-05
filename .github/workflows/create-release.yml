@@ -51,10 +51,12 @@ jobs:
             #src/Cli/bin/Release/net5.0/osx-x64/publish/ken-osx-x64
             #src/Cli/bin/Release/net5.0/osx-arm64/publish/ken-osx-arm64
 
-
-      - name: push qiniu
+      - name: push qiniu1
         run: |
           curl -L -o qrsctl https://devtools.qiniu.com/linux/amd64/qrsctl?ref=developer.qiniu.com
+
+      - name: push qiniu2
+        run: |
           ls
           pwd
           qrsctl login ${{ secrets.QN_USERNAME }} ${{ secrets.QN_PASSWORD }}
