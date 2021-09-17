@@ -17,7 +17,7 @@ namespace Cli.Commands.ken_sp
     {
         public static Command GetCommand()
         {
-            var command = new Command("sp") {
+            var command = new Command("sp","socketping") {
                 new Argument<string>("url",
                                      "url: kentxxq.com:443"),
                 new Option<int>(new[]{"-n", "--retryTimes"},
@@ -38,10 +38,10 @@ namespace Cli.Commands.ken_sp
 
         private static int Run(string url, SocketPingOptions socketPingOptions, CancellationToken ct, IHost host)
         {
-            IPEndPoint ipEndPoint = null!;
             bool result;
-            var render = host.Services.GetService<ConsoleRenderer>();
+            var render = host.Services.GetRequiredService<ConsoleRenderer>();
 
+            IPEndPoint ipEndPoint;
             try
             {
                 ipEndPoint = url.UrlToIPEndPoint();
@@ -107,11 +107,11 @@ namespace Cli.Commands.ken_sp
             }
             catch (OperationCanceledException)
             {
-                render.RenderError("操作取消");
+                render?.RenderError("操作取消");
             }
             catch (Exception e)
             {
-                render.RenderError($"连接失败:{e.Message}");
+                render?.RenderError($"连接失败:{e.Message}");
             }
 
             return tcp.Connected;

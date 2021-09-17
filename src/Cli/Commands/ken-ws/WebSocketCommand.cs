@@ -19,7 +19,7 @@ namespace Cli.Commands.ken_ws
 
         public static Command GetCommand()
         {
-            var command = new Command("ws");
+            var command = new Command("ws","websocket connect");
             command.AddArgument(wsUrl);
 
             command.Handler = CommandHandler.Create<Uri, CancellationToken, IHost>(Run);
@@ -43,7 +43,7 @@ namespace Cli.Commands.ken_ws
             //{
             //    render.RenderToRegion(input, Region.EntireTerminal);
             //}
-            var render = host.Services.GetService<ConsoleRenderer>();
+            var render = host.Services.GetRequiredService<ConsoleRenderer>();
             var ws = new ClientWebSocket();
             //ws.Options.RemoteCertificateValidationCallback = delegate { return true; };
             try
