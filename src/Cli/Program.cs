@@ -37,7 +37,7 @@ namespace Cli
                           var consoleRender = new ConsoleRenderer(console, OutputMode.Ansi, true);
                           services.AddSingleton(consoleRender);
 
-                          services.AddHttpClient<IIpService,IpService>()
+                          services.AddHttpClient<IIpService, IpService>()
                                   .AddTransientHttpErrorPolicy(p => p.WaitAndRetryAsync(5, _ => TimeSpan.FromSeconds(1)));
                           services.AddTransient<IConnectService, ConnectService>();
                       });
@@ -45,11 +45,13 @@ namespace Cli
                   .UseDefaults()
                   .Build()
 #if DEBUG
-            .InvokeAsync(new string[] { "ss" });
+            //.InvokeAsync(new string[] { "ss" });
+            .InvokeAsync(new string[] { "tr","kentxxq.com" });
             //.InvokeAsync(new string[] { "ws", "wss://ws.kentxxq.com/ws" });
             //.InvokeAsync(new string[] { "sp", "kentxxq.com:443", "-t 2", "-n 10", });
 #else
                   .InvokeAsync(args);
+                  //.InvokeAsync(new string[] { "tr" });
 #endif
             //System.Console.WriteLine(result);
 

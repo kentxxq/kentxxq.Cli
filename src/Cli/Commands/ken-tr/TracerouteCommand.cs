@@ -1,5 +1,6 @@
 ﻿using Cli.Interfaces;
 using Masuit.Tools;
+using Masuit.Tools.Win32;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -15,8 +16,8 @@ namespace Cli.Commands.ken_tr
     {
 
         public static Command GetCommand()
-        {
-            var command = new Command("tr")
+{
+            var command = new Command("tr", @"(windows only.check https://github.com/dotnet/runtime/issues/927 for details)")
             {
                 new Argument<string>("url",()=>"kentxxq.com","traceroute kentxxq.com")
             };
@@ -48,7 +49,7 @@ namespace Cli.Commands.ken_tr
             while (ttl < 255 && reply.Address.ToString() != Dns.GetHostAddresses(url)[0].ToString())
             {
                 Console.Write(ttl.ToString()+" "+reply.Address.ToString()+" ");
-                Console.Write($"take {reply.RoundtripTime}"+" ");
+                Console.Write($"take {reply.RoundtripTime}ms"+" ");
                 if (reply.Address.ToString().IsPrivateIP())
                 {
                     try
