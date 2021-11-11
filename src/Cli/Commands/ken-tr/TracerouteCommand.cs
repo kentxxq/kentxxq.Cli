@@ -1,14 +1,13 @@
-﻿using Cli.Interfaces;
-using Masuit.Tools;
-using Masuit.Tools.Win32;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System;
+﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
+using Cli.Interfaces;
+using Masuit.Tools;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Cli.Commands.ken_tr
 {
@@ -16,7 +15,7 @@ namespace Cli.Commands.ken_tr
     {
 
         public static Command GetCommand()
-{
+        {
             var command = new Command("tr", @"(windows only.check https://github.com/dotnet/runtime/issues/927 for details)")
             {
                 new Argument<string>("url",()=>"kentxxq.com","traceroute kentxxq.com")
@@ -48,8 +47,8 @@ namespace Cli.Commands.ken_tr
             reply = connectService.Ping(reply.Address.ToString(), 255);
             while (ttl < 255 && reply.Address.ToString() != Dns.GetHostAddresses(url)[0].ToString())
             {
-                Console.Write(ttl.ToString()+" "+reply.Address.ToString()+" ");
-                Console.Write($"take {reply.RoundtripTime}ms"+" ");
+                Console.Write(ttl.ToString() + " " + reply.Address.ToString() + " ");
+                Console.Write($"take {reply.RoundtripTime}ms" + " ");
                 if (reply.Address.ToString().IsPrivateIP())
                 {
                     try
@@ -68,7 +67,7 @@ namespace Cli.Commands.ken_tr
                 }
                 ttl += 1;
                 reply = connectService.Ping(url, ttl);
-                while(reply.Status == IPStatus.TimedOut)
+                while (reply.Status == IPStatus.TimedOut)
                 {
                     Console.WriteLine(ttl.ToString() + " " + "无响应");
                     ttl += 1;
