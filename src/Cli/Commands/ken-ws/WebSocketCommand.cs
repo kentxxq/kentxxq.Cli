@@ -1,7 +1,4 @@
-﻿using Cli.Extensions;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System;
+﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Rendering;
@@ -10,6 +7,9 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cli.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Cli.Commands.ken_ws
 {
@@ -19,7 +19,7 @@ namespace Cli.Commands.ken_ws
 
         public static Command GetCommand()
         {
-            var command = new Command("ws","websocket connect");
+            var command = new Command("ws", "websocket connect");
             command.AddArgument(wsUrl);
 
             command.Handler = CommandHandler.Create<Uri, CancellationToken, IHost>(Run);
@@ -58,9 +58,10 @@ namespace Cli.Commands.ken_ws
 
             var buffer = new byte[1024 * 4];
             string input;
-            Console.CancelKeyPress += (sender, eventArgs) => {
+            Console.CancelKeyPress += (sender, eventArgs) =>
+            {
                 Process.GetCurrentProcess().Kill();
-                };
+            };
             while (!ct.IsCancellationRequested)
             {
                 Console.Write(">> ");

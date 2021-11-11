@@ -1,23 +1,19 @@
-﻿using Cli.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.NetworkInformation;
+﻿using System.Net.NetworkInformation;
 using System.Text;
-using System.Threading.Tasks;
+using Cli.Interfaces;
 
 namespace Cli.Services
 {
     class ConnectService : IConnectService
     {
-        public PingReply Ping(string url,int ttl)
+        public PingReply Ping(string url, int ttl)
         {
             var ping = new Ping();
-            PingOptions pingOptions = new() {
+            PingOptions pingOptions = new()
+            {
                 DontFragment = true,
                 Ttl = ttl
-            };            
+            };
 
             string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
             byte[] buffer = Encoding.ASCII.GetBytes(data);

@@ -1,8 +1,4 @@
-﻿using Cli.Extensions;
-using kentxxq.Extensions.String;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System;
+﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Rendering;
@@ -10,6 +6,10 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Cli.Extensions;
+using kentxxq.Extensions.String;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Cli.Commands.ken_sp
 {
@@ -17,7 +17,7 @@ namespace Cli.Commands.ken_sp
     {
         public static Command GetCommand()
         {
-            var command = new Command("sp","socketping") {
+            var command = new Command("sp", "socketping") {
                 new Argument<string>("url",
                                      "url: kentxxq.com:443"),
                 new Option<int>(new[]{"-n", "--retryTimes"},

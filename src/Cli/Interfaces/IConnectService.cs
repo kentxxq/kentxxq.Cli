@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net.NetworkInformation;
 
 namespace Cli.Interfaces
 {
     interface IConnectService
     {
-        PingReply Ping(string url,int ttl=255);
+        PingReply Ping(string url, int ttl = 255);
     }
 }

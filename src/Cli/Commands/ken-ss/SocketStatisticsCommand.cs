@@ -1,14 +1,8 @@
-﻿using Cli.Commands.ken_sp;
-using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Linq;
 using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 namespace Cli.Commands.ken_ss
 {
@@ -16,7 +10,7 @@ namespace Cli.Commands.ken_ss
     {
         public static Command GetCommand()
         {
-            var command = new Command("ss", "active tcp listening") {};
+            var command = new Command("ss", "active tcp listening") { };
 
             command.Handler = CommandHandler.Create<IHost>(Run);
             return command;
