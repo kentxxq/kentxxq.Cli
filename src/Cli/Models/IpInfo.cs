@@ -1,4 +1,7 @@
-﻿using System.Text.Json.Serialization;
+﻿using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Cli.Enums;
 
 namespace Cli.Models
@@ -65,4 +68,9 @@ namespace Cli.Models
         }
     }
 
+    [JsonSourceGenerationOptions(WriteIndented = true)]
+    [JsonSerializable(typeof(IpInfo))]
+    public partial class IpInfoContext : JsonSerializerContext
+    {
+    }
 }
