@@ -12,11 +12,11 @@ namespace Cli.Commands.ken_ss
         {
             var command = new Command("ss", "active tcp listening") { };
 
-            command.Handler = CommandHandler.Create<IHost>(Run);
+            command.SetHandler(Run);
             return command;
         }
 
-        private static void Run(IHost host)
+        private static void Run()
         {
             IPGlobalProperties iPGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
             System.Net.IPEndPoint[] iPEndPoints = iPGlobalProperties.GetActiveTcpListeners();

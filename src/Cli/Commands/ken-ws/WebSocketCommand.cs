@@ -1,15 +1,15 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.CommandLine.Rendering;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Cli.Extensions;
+using Cli.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Spectre.Console;
 
 namespace Cli.Commands.ken_ws
 {
@@ -22,37 +22,20 @@ namespace Cli.Commands.ken_ws
             var command = new Command("ws", "websocket connect");
             command.AddArgument(wsUrl);
 
-            command.Handler = CommandHandler.Create<Uri, CancellationToken, IHost>(Run);
+            command.SetHandler<Uri, CancellationToken>(Run, wsUrl);
             return command;
         }
 
-        private static async Task Run(Uri wsUrl, CancellationToken ct, IHost host)
+        private static async Task Run(Uri wsUrl, CancellationToken ct)
         {
-            //var console = new SystemConsole();
-            //var render = new ConsoleRenderer(console, OutputMode.Ansi, true);
-            //var region = RegionTools.Live;
-
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    render.RenderToRegion($"nihao:{i}", region);
-            //    Thread.Sleep(50);
-            //}
-
-            //var input = System.Console.ReadLine();
-            //if (input is not null)
-            //{
-            //    render.RenderToRegion(input, Region.EntireTerminal);
-            //}
-            var render = host.Services.GetRequiredService<ConsoleRenderer>();
             var ws = new ClientWebSocket();
-            //ws.Options.RemoteCertificateValidationCallback = delegate { return true; };
             try
             {
                 await ws.ConnectAsync(wsUrl, ct);
             }
             catch (Exception e)
             {
-                render.RenderToRegion($"连接失败:{e.Message}".Color(ForegroundColorSpan.Red()), Region.EntireTerminal);
+                MyAnsiConsole.MarkupErrorLine($"连接失败:{e.Message}");
                 return;
             }
 
@@ -70,7 +53,7 @@ namespace Cli.Commands.ken_ws
 
                 await ws.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
                 var text = Encoding.UTF8.GetString(buffer);
-                render.RenderSuccess($"<< {text}");
+                MyAnsiConsole.MarkupSuccessLine($"<< {text}");
                 Array.Clear(buffer, 0, buffer.Length);
             }
         }
