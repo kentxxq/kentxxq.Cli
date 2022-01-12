@@ -1,45 +1,47 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.CommandLine.Rendering;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Cli.Extensions;
+using Cli.Utils;
 using kentxxq.Extensions.String;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Spectre.Console;
 
 namespace Cli.Commands.ken_sp
 {
     public class SocketPingCommand
     {
+        private static readonly Argument<string> url = new("url", "url: kentxxq.com:443");
+
+        private static readonly Option<int> retryTimes = new(new[] { "-n", "--retryTimes" }, () => 0, "default:0,retry forever");
+
+        private static readonly Option<int> timeout = new(new[] { "-t", "--timeout" },() => 2,"default:2 seconds");
+
+        private static readonly Option<bool> quit = new(new[] { "-q", "--quit" }, () => false, "Quit after connection succeeded");
+
+
         public static Command GetCommand()
         {
             var command = new Command("sp", "socketping") {
-                new Argument<string>("url",
-                                     "url: kentxxq.com:443"),
-                new Option<int>(new[]{"-n", "--retryTimes"},
-                                ()=>0,
-                                "default:0,retry forever"),
-                new Option<int>(new[] { "-t", "--timeout" },
-                                () => 2,
-                                "default:2 seconds"),
-                new Option<bool>(new[] { "-q", "--quit" },
-                                 () => false,
-                                 "Quit after connection succeeded")
+                url,
+                retryTimes,
+                timeout,
+                quit
             };
 
-            command.Handler = CommandHandler.Create<string, SocketPingOptions, CancellationToken, IHost>(Run);
+            //command.Handler = CommandHandler.Create<string, SocketPingOptions, CancellationToken, IHost>(Run);
+            command.SetHandler<string,int,int,bool, CancellationToken>(Run,url,retryTimes,timeout,quit);
             return command;
         }
 
 
-        private static int Run(string url, SocketPingOptions socketPingOptions, CancellationToken ct, IHost host)
+        private static void Run(string url, int retryTimes ,int timeout,bool quit, CancellationToken ct)
         {
             bool result;
-            var render = host.Services.GetRequiredService<ConsoleRenderer>();
 
             IPEndPoint ipEndPoint;
             try
@@ -48,43 +50,36 @@ namespace Cli.Commands.ken_sp
             }
             catch (Exception e)
             {
-                render.RenderError($"parse error:{e.Message}");
-                return 1;
+                MyAnsiConsole.MarkupErrorLine($"parse error:{e.Message}");
+                return;
             }
 
 
-            if (socketPingOptions.RetryTimes == 0)
+            if (retryTimes == 0)
             {
                 while (!ct.IsCancellationRequested)
                 {
-                    result = Connect(ipEndPoint, socketPingOptions.Timeout, render, ct);
-                    if (result && socketPingOptions.Quit)
-                    {
-                        return 0;
-                    }
+                    result = Connect(ipEndPoint, timeout, ct);
+                    return;
                 }
-                return 1;
+                return;
             }
             else
             {
-                for (var i = 0; i < socketPingOptions.RetryTimes; i++)
+                for (var i = 0; i < retryTimes; i++)
                 {
-                    result = Connect(ipEndPoint, socketPingOptions.Timeout, render, ct);
-                    if (result && socketPingOptions.Quit)
+                    result = Connect(ipEndPoint, timeout,  ct);
+                    if ((result && quit)|| ct.IsCancellationRequested)
                     {
-                        return 0;
-                    }
-                    else if (ct.IsCancellationRequested)
-                    {
-                        return 1;
+                        return;
                     }
                 }
-                return 1;
+                return;
             }
 
         }
 
-        private static bool Connect(IPEndPoint ipEndPoint, int timeout, ConsoleRenderer render, CancellationToken token)
+        private static bool Connect(IPEndPoint ipEndPoint, int timeout,  CancellationToken token)
         {
             using var tcp = new TcpClient();
             var stopwatch = new Stopwatch();
@@ -97,21 +92,20 @@ namespace Cli.Commands.ken_sp
 
                 if (tcp.Connected)
                 {
-                    render.RenderToRegion($"request { "successed".Color(ForegroundColorSpan.Green())}. waited { stopwatch.ElapsedMilliseconds} ms", Region.EntireTerminal);
+                    MyAnsiConsole.MarkupSuccessLine($"request successed. waited { stopwatch.ElapsedMilliseconds} ms");
                 }
                 else
                 {
-                    render.RenderToRegion($"request { "failed".Color(ForegroundColorSpan.Red())}. waited { stopwatch.ElapsedMilliseconds} ms", Region.EntireTerminal);
+                    MyAnsiConsole.MarkupSuccessLine($"request failed. waited { stopwatch.ElapsedMilliseconds} ms");
                 }
-                Console.WriteLine("");
             }
             catch (OperationCanceledException)
             {
-                render?.RenderError("操作取消");
+                MyAnsiConsole.MarkupErrorLine("操作取消");
             }
             catch (Exception e)
             {
-                render?.RenderError($"连接失败:{e.Message}");
+                MyAnsiConsole.MarkupErrorLine($"连接失败:{e.Message}");
             }
 
             return tcp.Connected;

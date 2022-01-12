@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Drawing.Text;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
@@ -13,25 +14,28 @@ namespace Cli.Commands.ken_tr
 {
     class TracerouteCommand
     {
+        private static readonly Argument<Uri> url =new("url", () => new Uri("kentxxq.com"), "traceroute kentxxq.com");
 
         public static Command GetCommand()
         {
             var command = new Command("tr", @"(windows only.check https://github.com/dotnet/runtime/issues/927 for details)")
             {
-                new Argument<string>("url",()=>"kentxxq.com","traceroute kentxxq.com")
+                url
             };
 
-            command.Handler = CommandHandler.Create<string, IHost>(Run);
+            //command.Handler = CommandHandler.Create<string, IHost>(Run);
+            //command.SetHandler<string>(Run,url);
+            //var customBinder = new TracerouteBinder();
+            command.SetHandler(async (TracerouteType tracerouteType) => { await Run(tracerouteType); }, new TracerouteBinder(url));
             return command;
         }
 
-        private static async Task Run(string url, IHost host)
+        private static async Task Run(TracerouteType tracerouteType)
         {
-            var ip = Dns.GetHostAddresses(url)[0].ToString();
-            var ipService = host.Services.GetRequiredService<IIpService>();
+            var ip = tracerouteType.WebSocketUri.Host;
+            var url = tracerouteType.WebSocketUri.ToString();
 
-            var connectService = host.Services.GetRequiredService<IConnectService>();
-            var reply = connectService.Ping(url);
+            var reply = tracerouteType.connectService.Ping(url);
             switch (reply.Status)
             {
                 case IPStatus.Success:
@@ -43,8 +47,8 @@ namespace Cli.Commands.ken_tr
             }
 
             var ttl = 1;
-            reply = connectService.Ping(url, ttl);
-            reply = connectService.Ping(reply.Address.ToString(), 255);
+            reply = tracerouteType.connectService.Ping(url, ttl);
+            reply = tracerouteType.connectService.Ping(reply.Address.ToString(), 255);
             while (ttl < 255 && reply.Address.ToString() != Dns.GetHostAddresses(url)[0].ToString())
             {
                 Console.Write(ttl.ToString() + " " + reply.Address.ToString() + " ");
@@ -62,19 +66,19 @@ namespace Cli.Commands.ken_tr
                 }
                 else
                 {
-                    var result = await ipService.GetIpInfoByIp(Dns.GetHostAddresses(reply.Address.ToString())[0].ToString());
+                    var result = await tracerouteType.ipService.GetIpInfoByIp(Dns.GetHostAddresses(reply.Address.ToString())[0].ToString());
                     Console.WriteLine(result?.ToString());
                 }
                 ttl += 1;
-                reply = connectService.Ping(url, ttl);
+                reply = tracerouteType.connectService.Ping(url, ttl);
                 while (reply.Status == IPStatus.TimedOut)
                 {
                     Console.WriteLine(ttl.ToString() + " " + "无响应");
                     ttl += 1;
-                    reply = connectService.Ping(reply.Address.ToString(), 255);
-                    reply = connectService.Ping(url, ttl);
+                    reply = tracerouteType.connectService.Ping(reply.Address.ToString(), 255);
+                    reply = tracerouteType.connectService.Ping(url, ttl);
                 }
-                reply = connectService.Ping(reply.Address.ToString(), 255);
+                reply = tracerouteType.connectService.Ping(reply.Address.ToString(), 255);
             }
             Console.Write($"{ttl} {reply.Address} ");
             if (reply.Address.ToString().IsPrivateIP())
@@ -90,7 +94,7 @@ namespace Cli.Commands.ken_tr
             }
             else
             {
-                var result = await ipService.GetIpInfoByIp(Dns.GetHostAddresses(reply.Address.ToString())[0].ToString());
+                var result = await tracerouteType.ipService.GetIpInfoByIp(Dns.GetHostAddresses(reply.Address.ToString())[0].ToString());
                 Console.Write(result?.ToString());
             }
         }
