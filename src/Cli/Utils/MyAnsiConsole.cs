@@ -15,7 +15,7 @@ namespace Cli.Utils
             AnsiConsole.MarkupLine($"[red]{text}[/]");
         }
 
-        public static void MarkupSuccessLine(string text)
+        public static void MarkupSuccessLine(string? text)
         {
             AnsiConsole.MarkupLine($"[green]{text}[/]");
         }
