@@ -14,26 +14,23 @@ namespace Cli.Commands.ken_tr
 {
     class TracerouteCommand
     {
-        private static readonly Argument<Uri> url =new("url", () => new Uri("kentxxq.com"), "traceroute kentxxq.com");
+        private static readonly Argument<string> hostName =new("url", () => "kentxxq.com", "traceroute kentxxq.com");
 
         public static Command GetCommand()
         {
             var command = new Command("tr", @"(windows only.check https://github.com/dotnet/runtime/issues/927 for details)")
             {
-                url
+                hostName
             };
 
-            //command.Handler = CommandHandler.Create<string, IHost>(Run);
-            //command.SetHandler<string>(Run,url);
-            //var customBinder = new TracerouteBinder();
-            command.SetHandler(async (TracerouteType tracerouteType) => { await Run(tracerouteType); }, new TracerouteBinder(url));
+            command.SetHandler(async (TracerouteType tracerouteType) => { await Run(tracerouteType); }, new TracerouteBinder(hostName));
             return command;
         }
 
         private static async Task Run(TracerouteType tracerouteType)
         {
-            var ip = tracerouteType.WebSocketUri.Host;
-            var url = tracerouteType.WebSocketUri.ToString();
+            var ip = tracerouteType.HostName;
+            var url = tracerouteType.HostName.ToString();
 
             var reply = tracerouteType.connectService.Ping(url);
             switch (reply.Status)
