@@ -21,12 +21,22 @@ namespace Cli.Commands.ken_tr
             _hostName = hostName;
         }
 
-        protected override TracerouteType GetBoundValue(BindingContext bindingContext) =>
-            new()
+        protected override TracerouteType GetBoundValue(BindingContext bindingContext)
+        {
+            var hostname = bindingContext.ParseResult.GetValueForArgument(_hostName);
+            if(hostname == null)
             {
-                HostName = bindingContext.ParseResult.GetValueForArgument(_hostName),
-                ConnectService = new ConnectService(),
-                IpService = new IpService(new HttpClient())
-            };
+                throw new ArgumentException("参数错误");
+            }
+            else
+            {
+                return new()
+                {
+                    HostName = hostname,
+                    ConnectService = new ConnectService(),
+                    IpService = new IpService(new HttpClient())
+                };
+            }
+        }
     }
 }
