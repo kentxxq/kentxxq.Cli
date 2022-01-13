@@ -17,7 +17,7 @@ namespace Cli.Services
 
             string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
             byte[] buffer = Encoding.ASCII.GetBytes(data);
-            int timeout = 2;
+            int timeout = 1000; // 毫秒
             var reply = ping.Send(url, timeout, buffer, pingOptions);
             //Console.WriteLine("Address: {0}", reply.Address.ToString());
             //Console.WriteLine("RoundTrip time: {0}", reply.RoundtripTime);

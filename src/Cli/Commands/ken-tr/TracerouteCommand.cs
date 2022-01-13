@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using Cli.Interfaces;
+using Cli.Utils;
 using Masuit.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,19 +33,37 @@ namespace Cli.Commands.ken_tr
         {
             var url = tracerouteType.HostName.ToString();
 
+            // 尝试连接目标主机
+            Console.WriteLine($"try connecting to {url} ...");
             var reply = tracerouteType.ConnectService.Ping(url);
-            switch (reply.Status)
+
+            for (int i = 0; i < 2; i++)
             {
-                case IPStatus.Success:
+                if (reply.Status == IPStatus.Success)
+                {
                     AnsiConsole.MarkupLine("connect [green]success[/]");
                     break;
-                default:
-                    AnsiConsole.MarkupLine("connect [red]faild[/]");
-                    break;
+                }
+                else
+                {
+                    reply = tracerouteType.ConnectService.Ping(url);
+                    if (i == 1)
+                    {
+                        AnsiConsole.MarkupLine("connect [red]faild[/]");
+                    }
+                }
             }
+
 
             var ttl = 1;
             reply = tracerouteType.ConnectService.Ping(url, ttl);
+            if(reply.Status == IPStatus.TimedOut)
+            {
+                MyAnsiConsole.MarkupWarningLine(ttl.ToString() + " " + "*" + " ttl=1包被丢弃");
+                ttl += 1;
+                reply = tracerouteType.ConnectService.Ping(url, ttl);
+            };
+
             reply = tracerouteType.ConnectService.Ping(reply.Address.ToString(), 255);
             while (ttl < 255 && reply.Address.ToString() != Dns.GetHostAddresses(url)[0].ToString())
             {
@@ -64,13 +83,13 @@ namespace Cli.Commands.ken_tr
                 else
                 {
                     var result = await tracerouteType.IpService.GetIpInfoByIp(Dns.GetHostAddresses(reply.Address.ToString())[0].ToString());
-                    Console.WriteLine(result?.ToString());
+                    MyAnsiConsole.MarkupSuccessLine(result?.ToString());
                 }
                 ttl += 1;
                 reply = tracerouteType.ConnectService.Ping(url, ttl);
                 while (reply.Status == IPStatus.TimedOut)
                 {
-                    Console.WriteLine(ttl.ToString() + " " + "无响应");
+                    MyAnsiConsole.MarkupWarningLine(ttl.ToString() + " " + "无响应");
                     ttl += 1;
                     tracerouteType.ConnectService.Ping(reply.Address.ToString(), 255);
                     reply = tracerouteType.ConnectService.Ping(url, ttl);
@@ -82,11 +101,11 @@ namespace Cli.Commands.ken_tr
             {
                 try
                 {
-                    Console.Write(Dns.GetHostEntry(reply.Address).HostName);
+                    AnsiConsole.Markup($"[green]{Dns.GetHostEntry(reply.Address).HostName}[/]");
                 }
                 catch (Exception)
                 {
-                    Console.Write("未知的主机");
+                    AnsiConsole.Markup("[orange3]未知的主机[/]");
                 }
             }
             else
