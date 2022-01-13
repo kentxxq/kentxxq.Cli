@@ -9,7 +9,7 @@ namespace Cli.Commands.ken_tr
 {
     internal class TracerouteType
     {
-        public Uri WebSocketUri { get; set; } = null!;
+        public string HostName { get; set; } = null!;
 
         public IIpService ipService { get; set; } = null!;
 

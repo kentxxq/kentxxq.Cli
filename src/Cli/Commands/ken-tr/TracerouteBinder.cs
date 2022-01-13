@@ -6,22 +6,27 @@ using System.CommandLine;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Cli.Interfaces;
+using Cli.Services;
+using System.Net.Http;
 
 namespace Cli.Commands.ken_tr
 {
     internal class TracerouteBinder : BinderBase<TracerouteType>
     {
-        private readonly Argument<Uri> _uri;
+        private readonly Argument<string> _hostName;
 
-        public TracerouteBinder(Argument<Uri> uri)
+        public TracerouteBinder(Argument<string> hostName)
         {
-            _uri = uri;
+            _hostName = hostName;
         }
 
         protected override TracerouteType GetBoundValue(BindingContext bindingContext) =>
             new()
             {
-                WebSocketUri = bindingContext.ParseResult.GetValueForArgument(_uri)
+                HostName = bindingContext.ParseResult.GetValueForArgument(_hostName),
+                connectService = new ConnectService(),
+                ipService = new IpService(new HttpClient())
             };
     }
 }
