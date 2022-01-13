@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Cli.Extensions;
 using Cli.Utils;
 using kentxxq.Extensions.String;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +20,7 @@ namespace Cli.Commands.ken_sp
 
         private static readonly Option<int> retryTimes = new(new[] { "-n", "--retryTimes" }, () => 0, "default:0,retry forever");
 
-        private static readonly Option<int> timeout = new(new[] { "-t", "--timeout" },() => 2,"default:2 seconds");
+        private static readonly Option<int> timeout = new(new[] { "-t", "--timeout" }, () => 2, "default:2 seconds");
 
         private static readonly Option<bool> quit = new(new[] { "-q", "--quit" }, () => false, "Quit after connection succeeded");
 
@@ -33,13 +34,12 @@ namespace Cli.Commands.ken_sp
                 quit
             };
 
-            //command.Handler = CommandHandler.Create<string, SocketPingOptions, CancellationToken, IHost>(Run);
-            command.SetHandler<string,int,int,bool, CancellationToken>(Run,url,retryTimes,timeout,quit);
+            command.SetHandler<string, int, int, bool, CancellationToken>(Run, url, retryTimes, timeout, quit);
             return command;
         }
 
 
-        private static void Run(string url, int retryTimes ,int timeout,bool quit, CancellationToken ct)
+        private static void Run(string url, int retryTimes, int timeout, bool quit, CancellationToken ct)
         {
             bool result;
 
@@ -68,8 +68,8 @@ namespace Cli.Commands.ken_sp
             {
                 for (var i = 0; i < retryTimes; i++)
                 {
-                    result = Connect(ipEndPoint, timeout,  ct);
-                    if ((result && quit)|| ct.IsCancellationRequested)
+                    result = Connect(ipEndPoint, timeout, ct);
+                    if ((result && quit) || ct.IsCancellationRequested)
                     {
                         return;
                     }
@@ -79,7 +79,7 @@ namespace Cli.Commands.ken_sp
 
         }
 
-        private static bool Connect(IPEndPoint ipEndPoint, int timeout,  CancellationToken token)
+        private static bool Connect(IPEndPoint ipEndPoint, int timeout, CancellationToken token)
         {
             using var tcp = new TcpClient();
             var stopwatch = new Stopwatch();
@@ -92,11 +92,11 @@ namespace Cli.Commands.ken_sp
 
                 if (tcp.Connected)
                 {
-                    MyAnsiConsole.MarkupSuccessLine($"request successed. waited { stopwatch.ElapsedMilliseconds} ms");
+                    AnsiConsole.MarkupLine($"request [green]successed[/]. waited { stopwatch.ElapsedMilliseconds.NetworkDelayWithColor()} ms");
                 }
                 else
                 {
-                    MyAnsiConsole.MarkupSuccessLine($"request failed. waited { stopwatch.ElapsedMilliseconds} ms");
+                    AnsiConsole.MarkupLine($"request [red]failed[/]. waited { stopwatch.ElapsedMilliseconds.NetworkDelayWithColor()} ms");
                 }
             }
             catch (OperationCanceledException)

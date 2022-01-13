@@ -19,5 +19,10 @@ namespace Cli.Utils
         {
             AnsiConsole.MarkupLine($"[green]{text}[/]");
         }
+
+        public static void MarkupWarningLine(string text)
+        {
+            AnsiConsole.MarkupLine($"[orange3]{text}[/]");
+        }
     }
 }

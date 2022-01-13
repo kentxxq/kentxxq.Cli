@@ -11,8 +11,8 @@ namespace Cli.Commands.ken_tr
     {
         public string HostName { get; set; } = null!;
 
-        public IIpService ipService { get; set; } = null!;
+        public IIpService IpService { get; set; } = null!;
 
-        public IConnectService connectService { get; set; } = null!;
+        public IConnectService ConnectService { get; set; } = null!;
     }
 }

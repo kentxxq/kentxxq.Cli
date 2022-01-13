@@ -11,20 +11,20 @@ namespace Cli.Services
 {
     class IpService : IIpService
     {
-        public HttpClient httpClient { get; }
-        public IpService(HttpClient client)
+        private HttpClient Client { get; }
+        public IpService(HttpClient httpclient)
         {
-            client.BaseAddress = new Uri("https://ip.taobao.com/outGetIpInfo");
-            httpClient = client;
+            httpclient.BaseAddress = new Uri("https://ip.taobao.com/outGetIpInfo");
+            Client = httpclient;
         }
 
         public async Task<IpInfo> GetIpInfoByIp(string ip)
         {
-            var result = await httpClient.GetFromJsonAsync<IpInfo>($"?accessKey=alibaba-inc&&ip={ip}", IpInfoContext.Default.IpInfo);
+            var result = await Client.GetFromJsonAsync<IpInfo>($"?accessKey=alibaba-inc&&ip={ip}", IpInfoContext.Default.IpInfo);
             if (result?.Code != Enums.IpInfoCode.个人qps超出)
             {
                 Thread.Sleep(1000);
-                result = await httpClient.GetFromJsonAsync<IpInfo>($"?accessKey=alibaba-inc&&ip={ip}", IpInfoContext.Default.IpInfo);
+                result = await Client.GetFromJsonAsync<IpInfo>($"?accessKey=alibaba-inc&&ip={ip}", IpInfoContext.Default.IpInfo);
             }
             return result ?? new IpInfo();
         }

@@ -25,8 +25,8 @@ namespace Cli.Commands.ken_tr
             new()
             {
                 HostName = bindingContext.ParseResult.GetValueForArgument(_hostName),
-                connectService = new ConnectService(),
-                ipService = new IpService(new HttpClient())
+                ConnectService = new ConnectService(),
+                IpService = new IpService(new HttpClient())
             };
     }
 }
