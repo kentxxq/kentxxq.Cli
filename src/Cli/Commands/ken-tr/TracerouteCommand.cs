@@ -72,7 +72,7 @@ namespace Cli.Commands.ken_tr
                 {
                     Console.WriteLine(ttl.ToString() + " " + "无响应");
                     ttl += 1;
-                    reply = tracerouteType.ConnectService.Ping(reply.Address.ToString(), 255);
+                    tracerouteType.ConnectService.Ping(reply.Address.ToString(), 255);
                     reply = tracerouteType.ConnectService.Ping(url, ttl);
                 }
                 reply = tracerouteType.ConnectService.Ping(reply.Address.ToString(), 255);
