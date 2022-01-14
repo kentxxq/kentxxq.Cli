@@ -104,11 +104,11 @@ namespace Cli.Commands.ken_sp
             }
             catch (OperationCanceledException)
             {
-                MyAnsiConsole.MarkupErrorLine("操作取消");
+                MyAnsiConsole.MarkupErrorLine("operation canceled");
             }
             catch (Exception e)
             {
-                MyAnsiConsole.MarkupErrorLine($"连接失败:{e.Message}");
+                MyAnsiConsole.MarkupErrorLine($"connect faild:{e.Message}");
             }
 
             return tcp.Connected;
