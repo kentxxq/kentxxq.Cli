@@ -59,7 +59,7 @@ namespace Cli.Commands.ken_tr
             reply = tracerouteType.ConnectService.Ping(url, ttl);
             if(reply.Status == IPStatus.TimedOut)
             {
-                MyAnsiConsole.MarkupWarningLine(ttl.ToString() + " " + "*" + " ttl=1包被丢弃");
+                MyAnsiConsole.MarkupWarningLine(ttl.ToString() + " " + "*" + " ttl=1 packet was dropped");
                 ttl += 1;
                 reply = tracerouteType.ConnectService.Ping(url, ttl);
             };
@@ -77,7 +77,7 @@ namespace Cli.Commands.ken_tr
                     }
                     catch (Exception)
                     {
-                        AnsiConsole.MarkupLine("[orange3]未知的主机[/]");
+                        AnsiConsole.MarkupLine("[orange3]unknown host[/]");
                     }
                 }
                 else
@@ -89,7 +89,7 @@ namespace Cli.Commands.ken_tr
                 reply = tracerouteType.ConnectService.Ping(url, ttl);
                 while (reply.Status == IPStatus.TimedOut)
                 {
-                    MyAnsiConsole.MarkupWarningLine(ttl.ToString() + " " + "无响应");
+                    MyAnsiConsole.MarkupWarningLine(ttl.ToString() + " " + "");
                     ttl += 1;
                     tracerouteType.ConnectService.Ping(reply.Address.ToString(), 255);
                     reply = tracerouteType.ConnectService.Ping(url, ttl);
@@ -105,7 +105,7 @@ namespace Cli.Commands.ken_tr
                 }
                 catch (Exception)
                 {
-                    AnsiConsole.Markup("[orange3]未知的主机[/]");
+                    AnsiConsole.Markup("[orange3]unknown host[/]");
                 }
             }
             else

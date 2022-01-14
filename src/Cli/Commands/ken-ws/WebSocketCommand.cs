@@ -35,7 +35,7 @@ namespace Cli.Commands.ken_ws
             }
             catch (Exception e)
             {
-                MyAnsiConsole.MarkupErrorLine($"连接失败:{e.Message}");
+                MyAnsiConsole.MarkupErrorLine($"connect faild:{e.Message}");
                 return;
             }
 
