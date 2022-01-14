@@ -59,7 +59,11 @@ namespace Cli.Commands.ken_sp
             {
                 while (!ct.IsCancellationRequested)
                 {
-                    Connect(ipEndPoint, timeout, ct);
+                    result=Connect(ipEndPoint, timeout, ct);
+                    if(result && quit)
+                    {
+                        return;
+                    }
                 }
                 return;
             }
