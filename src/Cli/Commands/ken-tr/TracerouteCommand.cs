@@ -34,14 +34,14 @@ namespace Cli.Commands.ken_tr
             var url = tracerouteType.HostName.ToString();
 
             // 尝试连接目标主机
-            Console.WriteLine($"try connecting to {url} ...");
+            Console.Write($"try connecting to {url} ...");
             var reply = tracerouteType.ConnectService.Ping(url);
 
             for (int i = 0; i < 2; i++)
             {
                 if (reply.Status == IPStatus.Success)
                 {
-                    AnsiConsole.MarkupLine("connect [green]success[/]");
+                    AnsiConsole.MarkupLine("[green]success[/]");
                     break;
                 }
                 else
@@ -49,7 +49,7 @@ namespace Cli.Commands.ken_tr
                     reply = tracerouteType.ConnectService.Ping(url);
                     if (i == 1)
                     {
-                        AnsiConsole.MarkupLine("connect [red]faild[/]");
+                        AnsiConsole.MarkupLine("[red]faild[/]");
                     }
                 }
             }

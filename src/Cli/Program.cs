@@ -16,9 +16,9 @@ var result = await Cli.Commands.AllCommands.BuildCommandLine()
       .Build()
 #if DEBUG
 //.InvokeAsync(new string[] { "ss" });
-.InvokeAsync(new string[] { "tr", "kentxxq.com" });
+//.InvokeAsync(new string[] { "tr", "kentxxq.com" });
 //.InvokeAsync(new string[] { "ws", "wss://ws.kentxxq.com/ws" });
-//.InvokeAsync(new string[] { "sp", "kentxxq.com:443", "-t 2", "-n 10", });
+.InvokeAsync(new string[] { "sp", "kentxxq.com:443", "-t 2", "-q", });
 #else
       .InvokeAsync(args);
       //.InvokeAsync(new string[] { "tr" });
