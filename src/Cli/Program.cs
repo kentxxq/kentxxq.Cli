@@ -1,14 +1,6 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Builder;
-using System.CommandLine.IO;
 using System.CommandLine.Parsing;
-using Cli.Interfaces;
-using Cli.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Polly;
 
 
 var result = await Cli.Commands.AllCommands.BuildCommandLine()

@@ -1,16 +1,13 @@
-﻿using System;
+﻿using Cli.Extensions;
+using Cli.Utils;
+using kentxxq.Extensions.String;
+using Spectre.Console;
+using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Cli.Extensions;
-using Cli.Utils;
-using kentxxq.Extensions.String;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Spectre.Console;
 
 namespace Cli.Commands.ken_sp
 {
@@ -59,8 +56,8 @@ namespace Cli.Commands.ken_sp
             {
                 while (!ct.IsCancellationRequested)
                 {
-                    result=Connect(ipEndPoint, timeout, ct);
-                    if(result && quit)
+                    result = Connect(ipEndPoint, timeout, ct);
+                    if (result && quit)
                     {
                         return;
                     }

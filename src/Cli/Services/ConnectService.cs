@@ -1,6 +1,6 @@
-﻿using System.Net.NetworkInformation;
+﻿using Cli.Interfaces;
+using System.Net.NetworkInformation;
 using System.Text;
-using Cli.Interfaces;
 
 namespace Cli.Services
 {

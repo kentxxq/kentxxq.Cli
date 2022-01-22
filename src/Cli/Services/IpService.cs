@@ -1,11 +1,10 @@
-﻿using System;
+﻿using Cli.Interfaces;
+using Cli.Models;
+using System;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
-using Cli.Interfaces;
-using Cli.Models;
 
 namespace Cli.Services
 {
@@ -20,11 +19,11 @@ namespace Cli.Services
 
         public async Task<IpInfo> GetIpInfoByIp(string ip)
         {
-            var result = await Client.GetFromJsonAsync<IpInfo>($"?accessKey=alibaba-inc&&ip={ip}", IpInfoContext.Default.IpInfo);
+            var result = await Client.GetFromJsonAsync($"?accessKey=alibaba-inc&&ip={ip}", IpInfoContext.Default.IpInfo);
             if (result?.Code != Enums.IpInfoCode.个人qps超出)
             {
                 Thread.Sleep(1000);
-                result = await Client.GetFromJsonAsync<IpInfo>($"?accessKey=alibaba-inc&&ip={ip}", IpInfoContext.Default.IpInfo);
+                result = await Client.GetFromJsonAsync($"?accessKey=alibaba-inc&&ip={ip}", IpInfoContext.Default.IpInfo);
             }
             return result ?? new IpInfo();
         }
