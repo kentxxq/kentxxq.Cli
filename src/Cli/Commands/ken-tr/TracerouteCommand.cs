@@ -1,16 +1,11 @@
-﻿using System;
+﻿using Cli.Utils;
+using Masuit.Tools;
+using Spectre.Console;
+using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
-using System.Drawing.Text;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
-using Cli.Interfaces;
-using Cli.Utils;
-using Masuit.Tools;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Spectre.Console;
 
 namespace Cli.Commands.ken_tr
 {
@@ -57,7 +52,7 @@ namespace Cli.Commands.ken_tr
 
             var ttl = 1;
             reply = tracerouteType.ConnectService.Ping(url, ttl);
-            if(reply.Status == IPStatus.TimedOut)
+            if (reply.Status == IPStatus.TimedOut)
             {
                 MyAnsiConsole.MarkupWarningLine(ttl.ToString() + " " + "*" + " ttl=1 packet was dropped");
                 ttl += 1;

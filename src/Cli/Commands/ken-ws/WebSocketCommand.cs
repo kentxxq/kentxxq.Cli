@@ -1,15 +1,11 @@
-﻿using System;
+﻿using Cli.Utils;
+using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Cli.Utils;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Spectre.Console;
 
 namespace Cli.Commands.ken_ws
 {

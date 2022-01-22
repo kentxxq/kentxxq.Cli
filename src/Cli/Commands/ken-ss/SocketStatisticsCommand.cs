@@ -1,8 +1,6 @@
 ﻿using System;
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.Net.NetworkInformation;
-using Microsoft.Extensions.Hosting;
 
 namespace Cli.Commands.ken_ss
 {

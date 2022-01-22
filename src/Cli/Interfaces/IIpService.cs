@@ -1,5 +1,5 @@
-﻿using System.Threading.Tasks;
-using Cli.Models;
+﻿using Cli.Models;
+using System.Threading.Tasks;
 
 namespace Cli.Interfaces
 {

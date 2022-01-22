@@ -1,8 +1,5 @@
-﻿using System;
-using System.Text.Json;
+﻿using Cli.Enums;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
-using Cli.Enums;
 
 namespace Cli.Models
 {
