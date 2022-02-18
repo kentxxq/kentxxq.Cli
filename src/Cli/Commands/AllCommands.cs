@@ -1,4 +1,5 @@
-﻿using Cli.Commands.ken_sp;
+﻿using Cli.Commands.ken_redis;
+using Cli.Commands.ken_sp;
 using Cli.Commands.ken_ss;
 using Cli.Commands.ken_tr;
 using Cli.Commands.ken_ws;
@@ -16,6 +17,7 @@ namespace Cli.Commands
             rootCommand.AddCommand(WebSocketCommand.GetCommand());
             rootCommand.AddCommand(SocketStatisticsCommand.GetCommand());
             rootCommand.AddCommand(TracerouteCommand.GetCommand());
+            rootCommand.AddCommand(RedisCommand.GetCommand());
             return new CommandLineBuilder(rootCommand);
         }
     }
