@@ -1,31 +1,25 @@
-﻿using Cli.Interfaces;
-using System.Net.NetworkInformation;
+﻿using System.Net.NetworkInformation;
 using System.Text;
+using Cli.Interfaces;
 
-namespace Cli.Services
+namespace Cli.Services;
+
+internal class ConnectService : IConnectService
 {
-    class ConnectService : IConnectService
+    public PingReply Ping(string url, int ttl)
     {
-        public PingReply Ping(string url, int ttl)
+        var ping = new Ping();
+        PingOptions pingOptions = new()
         {
-            var ping = new Ping();
-            PingOptions pingOptions = new()
-            {
-                DontFragment = true,
-                Ttl = ttl
-            };
+            DontFragment = true,
+            Ttl = ttl
+        };
 
-            string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-            byte[] buffer = Encoding.ASCII.GetBytes(data);
-            int timeout = 1000; // 毫秒
-            var reply = ping.Send(url, timeout, buffer, pingOptions);
-            //Console.WriteLine("Address: {0}", reply.Address.ToString());
-            //Console.WriteLine("RoundTrip time: {0}", reply.RoundtripTime);
-            //Console.WriteLine("Time to live: {0}", reply.Options?.Ttl);
-            //Console.WriteLine("Don't fragment: {0}", reply.Options?.DontFragment);
-            //Console.WriteLine("Buffer size: {0}", reply.Buffer.Length);
+        const string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        var buffer = Encoding.ASCII.GetBytes(data);
+        const int timeout = 1000; // 毫秒
+        var reply = ping.Send(url, timeout, buffer, pingOptions);
 
-            return reply;
-        }
+        return reply;
     }
 }

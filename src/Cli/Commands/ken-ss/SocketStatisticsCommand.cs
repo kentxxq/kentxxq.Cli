@@ -2,27 +2,22 @@
 using System.CommandLine;
 using System.Net.NetworkInformation;
 
-namespace Cli.Commands.ken_ss
+namespace Cli.Commands.ken_ss;
+
+public static class SocketStatisticsCommand
 {
-    public class SocketStatisticsCommand
+    public static Command GetCommand()
     {
-        public static Command GetCommand()
-        {
-            var command = new Command("ss", "active tcp listening") { };
+        var command = new Command("ss", "active tcp listening");
 
-            command.SetHandler(Run);
-            return command;
-        }
+        command.SetHandler(Run);
+        return command;
+    }
 
-        private static void Run()
-        {
-            IPGlobalProperties iPGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
-            System.Net.IPEndPoint[] iPEndPoints = iPGlobalProperties.GetActiveTcpListeners();
-            foreach (var item in iPEndPoints)
-            {
-                Console.WriteLine($"{item.Address}:{item.Port}");
-            }
-        }
-
+    private static void Run()
+    {
+        var iPGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+        var iPEndPoints = iPGlobalProperties.GetActiveTcpListeners();
+        foreach (var item in iPEndPoints) Console.WriteLine($"{item.Address}:{item.Port}");
     }
 }
