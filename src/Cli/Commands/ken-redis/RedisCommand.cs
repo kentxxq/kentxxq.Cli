@@ -33,51 +33,69 @@ public static class RedisCommand
 
     private static void Run(string url, int port, int db, string password, CancellationToken ct)
     {
-        var redis = ConnectionMultiplexer.Connect(new ConfigurationOptions
+        password = password.Replace(" ", "");
+        try
         {
-            EndPoints = { $"{url}:{port}" }
-        });
-        var dbc = redis.GetDatabase(db);
-        var pong = dbc.Ping();
-        AnsiConsole.MarkupLine($"connect [green]success[/],take {pong.TotalMilliseconds} ms");
+            var redis = ConnectionMultiplexer.Connect(new ConfigurationOptions
+            {
+                EndPoints = { $"{url}:{port}" },
+                ConnectRetry = 2,
+                ConnectTimeout = 3000,
+                Password = password
+            });
 
-        var server = redis.GetServer(url, port);
-        var keysCount = server.Keys(db, "*").Count();
-        Console.WriteLine($"db{db} keys:{keysCount}");
+            // 测试连接
+            var dbc = redis.GetDatabase(db);
+            var pong = dbc.Ping();
+            AnsiConsole.MarkupLine($"connect [green]success[/],take {pong.TotalMilliseconds} ms");
 
-        while (!ct.IsCancellationRequested)
-        {
-            Console.Write(">>");
-            var input = Console.ReadLine() ?? "";
-            var inputs = input.Split(" ", 2);
-            if (inputs.Length == 1 && input != "" && input != "exit()")
+            // 打印此db的keys数量
+            var server = redis.GetServer(url, port);
+            var keysCount = server.Keys(db, "*").Count();
+            Console.WriteLine($"db{db} keys:{keysCount}");
+
+            while (!ct.IsCancellationRequested)
             {
-                var keys = server.Keys(db, input);
-                AnsiConsole.MarkupLine($"[green]keys count:{keys.Count()}[/]");
-            }
-            else if (input == "")
-            {
-                Console.WriteLine("usage:");
-                Console.WriteLine($"a*:search db{db} all keys start with a");
-                Console.WriteLine($"del a2*:delete db{db} all keys start with a2");
-                Console.WriteLine("exit():just exit");
-            }
-            else
-            {
-                switch (inputs[0])
+                Console.Write(">>");
+                var input = Console.ReadLine() ?? "";
+                var inputs = input.Split(" ", 2);
+                if (inputs.Length == 1 && input != "" && input != "exit()")
                 {
-                    case "del":
-                        var delKeys = server.Keys(db, inputs[1]);
-                        var delKeysCount = dbc.KeyDelete(delKeys.ToArray());
-                        AnsiConsole.MarkupLine($"[red]deleted {delKeysCount} key(s)[/]");
-                        break;
-                    case "exit()":
-                        return;
-                    default:
-                        Console.WriteLine("unknown command");
-                        break;
+                    var keys = server.Keys(db, input);
+                    AnsiConsole.MarkupLine($"[green]keys count:{keys.Count()}[/]");
+                }
+                else if (input == "")
+                {
+                    Console.WriteLine("usage:");
+                    Console.WriteLine($"a*: search db{db} all keys start with a");
+                    Console.WriteLine($"del a2*: delete db{db} all keys start with a2");
+                    Console.WriteLine("exit(): just exit");
+                }
+                else
+                {
+                    switch (inputs[0])
+                    {
+                        case "del":
+                            var delKeys = server.Keys(db, inputs[1]);
+                            var delKeysCount = dbc.KeyDelete(delKeys.ToArray());
+                            AnsiConsole.MarkupLine($"[red]deleted {delKeysCount} key(s)[/]");
+                            break;
+                        case "exit()":
+                            return;
+                        default:
+                            Console.WriteLine("unknown command");
+                            break;
+                    }
                 }
             }
+        }
+        catch (RedisConnectionException e)
+        {
+            AnsiConsole.MarkupLine($"connect [red]failed[/]: {e.Message}");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
         }
     }
 }
