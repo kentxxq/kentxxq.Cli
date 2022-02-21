@@ -51,7 +51,7 @@ internal static class TracerouteCommand
         reply = tracerouteType.ConnectService.Ping(url, ttl);
         if (reply.Status == IPStatus.TimedOut)
         {
-            MyAnsiConsole.MarkupWarningLine(ttl + " " + "*" + " ttl=1 packet was dropped");
+            MyAnsiConsole.MarkupWarningLine($"{ttl} request timeout");
             ttl += 1;
             reply = tracerouteType.ConnectService.Ping(url, ttl);
         }
@@ -59,8 +59,7 @@ internal static class TracerouteCommand
         reply = tracerouteType.ConnectService.Ping(reply.Address.ToString());
         while (ttl < 255 && reply.Address.ToString() != (await Dns.GetHostAddressesAsync(url))[0].ToString())
         {
-            Console.Write(ttl + " " + reply.Address + " ");
-            Console.Write($"take {reply.RoundtripTime}ms" + " ");
+            Console.Write($"{ttl} {reply.Address} take {reply.RoundtripTime}ms ");
             if (reply.Address.ToString().IsPrivateIP())
             {
                 try
@@ -85,7 +84,7 @@ internal static class TracerouteCommand
             reply = tracerouteType.ConnectService.Ping(url, ttl);
             while (reply.Status == IPStatus.TimedOut)
             {
-                MyAnsiConsole.MarkupWarningLine(ttl + " " + "");
+                MyAnsiConsole.MarkupWarningLine($"{ttl} request timeout");
                 ttl += 1;
                 tracerouteType.ConnectService.Ping(reply.Address.ToString());
                 reply = tracerouteType.ConnectService.Ping(url, ttl);
