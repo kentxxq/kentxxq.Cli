@@ -7,10 +7,10 @@ await AllCommands.BuildCommandLine()
     .Build()
 #if DEBUG
     // .InvokeAsync(new string[] { "ss" });
-    .InvokeAsync(new[] { "tr", "kentxxq.com" });
+    // .InvokeAsync(new[] { "tr", "kentxxq.com" });
 //.InvokeAsync(new[] { "ws", "wss://ws.kentxxq.com/ws" });
 // .InvokeAsync(new[] { "sp", "kentxxq.com:443", "-t 2", "-q" });
-// .InvokeAsync(new[] { "redis", "bwd.kentxxq.com","-p 123456" });
+.InvokeAsync(new[] { "redis", "bwd.kentxxq.com","-p 123456" });
 #else
       .InvokeAsync(args);
       //.InvokeAsync(new string[] { "tr" });

@@ -2,6 +2,7 @@
 using System.CommandLine;
 using System.Linq;
 using System.Threading;
+using Cli.Utils;
 using Spectre.Console;
 using StackExchange.Redis;
 
@@ -54,6 +55,7 @@ public static class RedisCommand
             var keysCount = server.Keys(db, "*").Count();
             Console.WriteLine($"db{db} keys:{keysCount}");
 
+            int n;
             while (!ct.IsCancellationRequested)
             {
                 Console.Write(">>");
@@ -62,14 +64,7 @@ public static class RedisCommand
                 if (inputs.Length == 1 && input != "" && input != "exit()")
                 {
                     var keys = server.Keys(db, input);
-                    AnsiConsole.MarkupLine($"[green]keys count:{keys.Count()}[/]");
-                }
-                else if (input == "")
-                {
-                    Console.WriteLine("usage:");
-                    Console.WriteLine($"a*: search db{db} all keys start with a");
-                    Console.WriteLine($"del a2*: delete db{db} all keys start with a2");
-                    Console.WriteLine("exit(): just exit");
+                    MyAnsiConsole.MarkupSuccessLine($"keys count:{keys.Count()}");
                 }
                 else
                 {
@@ -78,12 +73,25 @@ public static class RedisCommand
                         case "del":
                             var delKeys = server.Keys(db, inputs[1]);
                             var delKeysCount = dbc.KeyDelete(delKeys.ToArray());
-                            AnsiConsole.MarkupLine($"[red]deleted {delKeysCount} key(s)[/]");
+                            MyAnsiConsole.MarkupErrorLine($"deleted {delKeysCount} key(s)");
                             break;
+                        case "select":
+                            if (int.TryParse(inputs[1], out n))
+                            {
+                                db = n;
+                                AnsiConsole.MarkupLine($"using [green]db{inputs[1]} [/]keys count:[green]{server.Keys(db, "*").Count()}[/]");
+                                break;
+                            }
+                            else
+                            {
+                                PrintUsage();
+                                break;
+                            }
+
                         case "exit()":
                             return;
                         default:
-                            Console.WriteLine("unknown command");
+                            PrintUsage();
                             break;
                     }
                 }
@@ -97,5 +105,14 @@ public static class RedisCommand
         {
             Console.WriteLine(e);
         }
+    }
+
+    private static void PrintUsage()
+    {
+        Console.WriteLine("usage:");
+        Console.WriteLine($"a*: search all keys start with a in db");
+        Console.WriteLine($"del a2*: delete all keys start with a2 in db");
+        Console.WriteLine($"select 1: checkout db 1");
+        Console.WriteLine("exit(): just exit");
     }
 }
