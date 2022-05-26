@@ -60,6 +60,7 @@ public static class SocketPingCommand
             while (!ct.IsCancellationRequested)
             {
                 result = Connect(ipEndPoint, timeout, ct);
+                Thread.Sleep(500);
                 if (result && quit) return;
             }
 
