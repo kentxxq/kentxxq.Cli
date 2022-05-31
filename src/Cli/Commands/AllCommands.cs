@@ -5,6 +5,7 @@ using Cli.Commands.ken_tr;
 using Cli.Commands.ken_ws;
 using System.CommandLine;
 using System.CommandLine.Builder;
+using Cli.Commands.ken_k8s;
 
 namespace Cli.Commands
 {
@@ -18,6 +19,7 @@ namespace Cli.Commands
             rootCommand.AddCommand(SocketStatisticsCommand.GetCommand());
             rootCommand.AddCommand(TracerouteCommand.GetCommand());
             rootCommand.AddCommand(RedisCommand.GetCommand());
+            rootCommand.AddCommand(new K8sCommand().GetCommand());
             return new CommandLineBuilder(rootCommand);
         }
     }
