@@ -9,20 +9,18 @@ using Spectre.Console;
 
 namespace Cli.Commands.ken_k8s;
 
-public class K8sCommand
+public static class K8SCommand
 {
-    private static readonly Argument<string> SubCommand = new("get-restarted-pod", "get-restarted-pod");
+    private static readonly Argument<string> SubCommand = new("subCommand", "allow: get-restarted-pod");
 
-    private static readonly Option<string> ConfigPath = new(new[] { "-c", "--kubeconfig" }, () => "",
-        "default $HOME/.kube/config");
+    private static readonly Option<string> ConfigPath = new(
+        new[] { "-c", "--kubeconfig" },
+        "kubeconfig file path");
 
     private static readonly Option<string> ClusterNamespace =
-        new(new[] { "-n", "--namespace" }, () => "", "default all namespace");
+        new(new[] { "-n", "--namespace" }, "specified namespace");
 
-
-    private Kubernetes _kubernetes;
-
-    public Command GetCommand()
+    public static Command GetCommand()
     {
         var command = new Command("k8s", "k8s")
         {
@@ -34,36 +32,35 @@ public class K8sCommand
         return command;
     }
 
-    private async Task Run(string subCommand, string configPath, string clusterNamespace)
+    private static async Task Run(string subCommand, string configPath, string clusterNamespace)
     {
-        var config = configPath == ""
+        var config = configPath.IsNullOrEmpty()
             ? KubernetesClientConfiguration.BuildConfigFromConfigFile()
             : await KubernetesClientConfiguration.BuildConfigFromConfigFileAsync(new FileInfo(configPath));
-        _kubernetes = new Kubernetes(config);
+        var client = new Kubernetes(config);
         switch (subCommand)
         {
             case "get-restarted-pod":
-                await GetRestartedPod(clusterNamespace);
+                await GetRestartedPod(client, clusterNamespace);
                 return;
             default:
                 MyAnsiConsole.MarkupErrorLine("command not found!");
                 return;
-                ;
         }
     }
 
-    private async Task GetRestartedPod(string clusterNamespace)
+    private static async Task GetRestartedPod(Kubernetes client, string clusterNamespace)
     {
         var table = new Table();
         await AnsiConsole.Live(table).StartAsync(async ctx =>
         {
-            var namespaces = await _kubernetes.ListNamespaceAsync();
+            var namespaces = await client.ListNamespaceAsync();
             if (!clusterNamespace.IsNullOrEmpty())
                 namespaces.Items = namespaces.Items.Where(n => n.Metadata.Name == clusterNamespace).ToList();
 
             foreach (var ns in namespaces.Items)
             {
-                var pods = await _kubernetes.ListNamespacedPodAsync(ns.Metadata.Name);
+                var pods = await client.ListNamespacedPodAsync(ns.Metadata.Name);
                 var restartedPods = pods.Items.Where(p => p.Status.ContainerStatuses.Any(c => c.RestartCount != 0));
                 foreach (var restartedPod in restartedPods)
                 foreach (var c in restartedPod.Status.ContainerStatuses)
