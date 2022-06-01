@@ -1,9 +1,11 @@
 name: create-release
 on:
   push:
-    branches:
-      - "master"
-      - "test"
+    tags:
+      - *
+#    branches:
+#      - "master"
+#      - "test"
 
 jobs:
   create-release:
@@ -36,9 +38,9 @@ jobs:
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.CREATE_RELEASE_TOKEN }}"
-          automatic_release_tag: "latest"
+          automatic_release_tag: "${{ github.ref_name }}"
           prerelease: false
-          title: "latest"
+          title: "${{ github.ref_name }}"
           files: |
             src/Cli/bin/Release/net6.0/linux-x64/publish/ken-linux-x64
             src/Cli/bin/Release/net6.0/linux-musl-x64/publish/ken-linux-musl-x64
