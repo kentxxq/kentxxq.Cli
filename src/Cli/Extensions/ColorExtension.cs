@@ -1,15 +1,14 @@
-﻿namespace Cli.Extensions
+﻿namespace Cli.Extensions;
+
+public static class ColorExtension
 {
-    public static class ColorExtension
+    public static string NetworkDelayWithColor(this long time)
     {
-        public static string NetworkDelayWithColor(this long time)
+        return time switch
         {
-            return time switch
-            {
-                < 100 => $"[green]{time}[/]",
-                < 300 => $"[orange3]{time}[/]",
-                _ => $"[red]{time}[/]",
-            };
-        }
+            < 100 => $"[green]{time}[/]",
+            < 300 => $"[orange3]{time}[/]",
+            _ => $"[red]{time}[/]"
+        };
     }
 }
