@@ -1,15 +1,14 @@
-﻿using Cli.Models;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Cli.Models;
 
-namespace Cli.Interfaces
+namespace Cli.Interfaces;
+
+internal interface IIpService
 {
-    interface IIpService
-    {
-        /// <summary>
-        /// 获取ip的相关信息
-        /// </summary>
-        /// <param name="ip">ip地址</param>
-        /// <returns></returns>
-        Task<IpInfo> GetIpInfoByIp(string ip);
-    }
+    /// <summary>
+    /// 获取ip的相关信息
+    /// </summary>
+    /// <param name="ip">ip地址</param>
+    /// <returns></returns>
+    Task<IpInfo> GetIpInfoByIp(string ip);
 }

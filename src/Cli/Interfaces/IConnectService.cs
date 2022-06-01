@@ -1,9 +1,8 @@
 ﻿using System.Net.NetworkInformation;
 
-namespace Cli.Interfaces
+namespace Cli.Interfaces;
+
+internal interface IConnectService
 {
-    interface IConnectService
-    {
-        PingReply Ping(string url, int ttl = 255);
-    }
+    PingReply Ping(string url, int ttl = 255);
 }

@@ -1,13 +1,12 @@
 ﻿using Cli.Interfaces;
 
-namespace Cli.Commands.ken_tr
+namespace Cli.Commands.ken_tr;
+
+internal class TracerouteType
 {
-    internal class TracerouteType
-    {
-        public string HostName { get; set; } = null!;
+    public string HostName { get; set; } = null!;
 
-        public IIpService IpService { get; set; } = null!;
+    public IIpService IpService { get; set; } = null!;
 
-        public IConnectService ConnectService { get; set; } = null!;
-    }
+    public IConnectService ConnectService { get; set; } = null!;
 }

@@ -79,14 +79,13 @@ public static class RedisCommand
                             if (int.TryParse(inputs[1], out n))
                             {
                                 db = n;
-                                AnsiConsole.MarkupLine($"using [green]db{inputs[1]} [/]keys count:[green]{server.Keys(db, "*").Count()}[/]");
+                                AnsiConsole.MarkupLine(
+                                    $"using [green]db{inputs[1]} [/]keys count:[green]{server.Keys(db, "*").Count()}[/]");
                                 break;
                             }
-                            else
-                            {
-                                PrintUsage();
-                                break;
-                            }
+
+                            PrintUsage();
+                            break;
 
                         case "exit()":
                             return;
@@ -110,9 +109,9 @@ public static class RedisCommand
     private static void PrintUsage()
     {
         Console.WriteLine("usage:");
-        Console.WriteLine($"a*: search all keys start with a in db");
-        Console.WriteLine($"del a2*: delete all keys start with a2 in db");
-        Console.WriteLine($"select 1: checkout db 1");
+        Console.WriteLine("a*: search all keys start with a in db");
+        Console.WriteLine("del a2*: delete all keys start with a2 in db");
+        Console.WriteLine("select 1: checkout db 1");
         Console.WriteLine("exit(): just exit");
     }
 }

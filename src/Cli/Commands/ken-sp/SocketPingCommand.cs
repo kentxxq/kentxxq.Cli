@@ -70,7 +70,7 @@ public static class SocketPingCommand
         for (var i = 0; i < retryTimes; i++)
         {
             result = Connect(ipEndPoint, timeout, ct);
-            if (result && quit || ct.IsCancellationRequested) return;
+            if ((result && quit) || ct.IsCancellationRequested) return;
         }
     }
 
