@@ -19,7 +19,7 @@ public class AllCommands
         rootCommand.AddCommand(SocketStatisticsCommand.GetCommand());
         rootCommand.AddCommand(TracerouteCommand.GetCommand());
         rootCommand.AddCommand(RedisCommand.GetCommand());
-        rootCommand.AddCommand(new K8sCommand().GetCommand());
+        rootCommand.AddCommand(K8SCommand.GetCommand());
         return new CommandLineBuilder(rootCommand);
     }
 }
