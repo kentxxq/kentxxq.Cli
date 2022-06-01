@@ -21,4 +21,9 @@
         <Folder Include="Properties\PublishProfiles\" />
     </ItemGroup>
 
+    <PropertyGroup>
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <InformationalVersion>1.0.1</InformationalVersion>
+    </PropertyGroup>
+    
 </Project>
