@@ -4,10 +4,6 @@ using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Cli.Utils;
-using kentxxq.Utils;
-using Octokit;
-using FileMode = System.IO.FileMode;
 
 namespace Cli.Commands.ken_update;
 
@@ -17,7 +13,7 @@ public static class UpdateCommand
     private static readonly string FileName = GetFileName();
     private static readonly string NewFilePath = Path.Combine(Directory.GetCurrentDirectory(), FileName + "new");
     private static readonly string DownloadUrl = DownloadServer + FileName;
-    
+
     public static Command GetCommand()
     {
         var command = new Command("update", "update ken command");
@@ -52,7 +48,7 @@ public static class UpdateCommand
     {
         var httpClient = new HttpClient();
         using var fs = new FileStream(NewFilePath, FileMode.CreateNew, FileAccess.Write);
-        httpClient.GetAsync(DownloadUrl).Result.Content.CopyTo(fs,null,CancellationToken.None);
+        httpClient.GetAsync(DownloadUrl).Result.Content.CopyTo(fs, null, CancellationToken.None);
     }
 
     private static string GetFileName()
