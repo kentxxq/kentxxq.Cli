@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using kentxxq.Utils;
 
 namespace Cli.Commands.ken_update;
 
@@ -14,6 +15,7 @@ public static class UpdateCommand
     private static void Run()
     {
         // 检查当前版本
+        var version = Assembly.GetAssemblyInformationalVersion();
         // 检查github上面的版本
         // 下载对应最新的cli
         // 移动当前的版本，将新版本cli放到现有的位置
