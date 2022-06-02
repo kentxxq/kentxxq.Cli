@@ -5,6 +5,7 @@ using Cli.Commands.ken_redis;
 using Cli.Commands.ken_sp;
 using Cli.Commands.ken_ss;
 using Cli.Commands.ken_tr;
+using Cli.Commands.ken_update;
 using Cli.Commands.ken_web;
 using Cli.Commands.ken_ws;
 
@@ -22,6 +23,7 @@ public class AllCommands
         rootCommand.AddCommand(RedisCommand.GetCommand());
         rootCommand.AddCommand(K8SCommand.GetCommand());
         rootCommand.AddCommand(WebCommand.GetCommand());
+        rootCommand.AddCommand(UpdateCommand.GetCommand());
         return new CommandLineBuilder(rootCommand);
     }
 }
