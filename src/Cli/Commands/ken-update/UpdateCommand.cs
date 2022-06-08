@@ -4,54 +4,92 @@ using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Cli.Utils;
+using kentxxq.Utils;
+using Octokit;
+using FileMode = System.IO.FileMode;
 
 namespace Cli.Commands.ken_update;
 
 public static class UpdateCommand
 {
-    private const string DownloadServer = @"http://tool.kentxxq.com/";
-    private static readonly string FileName = GetFileName();
-    private static readonly string NewFilePath = Path.Combine(Directory.GetCurrentDirectory(), FileName + "new");
-    private static readonly string DownloadUrl = DownloadServer + FileName;
+    /// <summary>
+    /// 国内的下载地址
+    /// </summary>
+    private const string DownloadServer = @"http://tools.kentxxq.com/";
+    
+    /// <summary>
+    /// 服务器上的文件名称
+    /// </summary>
+    private static readonly string ServerFileName = GetServerFileName();
+    
+    /// <summary>
+    /// 具体文件下载地址
+    /// </summary>
+    private static readonly string DownloadUrl = DownloadServer + ServerFileName;
+
+    /// <summary>
+    /// 新版本程序下载后的地址
+    /// </summary>
+    private static readonly string NewFilePath = Path.Combine(Directory.GetCurrentDirectory(), ServerFileName + "new");
+
+    /// <summary>
+    /// 程序在当前平台上的命名
+    /// </summary>
+    private static readonly string FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "ken.exe" : "ken";
+    
+    /// <summary>
+    /// 正在执行的程序路径
+    /// </summary>
+    private static readonly string FilePath = Path.Combine(Directory.GetCurrentDirectory(), FileName);
+    
 
     public static Command GetCommand()
     {
         var command = new Command("update", "update ken command");
-        command.SetHandler(Run);
+        command.SetHandler(context =>
+        {
+            Run();
+        });
         return command;
     }
 
     private static void Run()
     {
-        DownloadNewVersion();
-
-        // // 检查当前版本
-        // var version = Assembly.GetAssemblyInformationalVersion();
-        // // 检查github上面的版本
-        // var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
-        // var latestRelease = client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli").Result;
-        // var info = client.GetLastApiInfo();
-        // var latestVersion = latestRelease.TagName;
-        // if (latestVersion == version)
-        // {
-        //     MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
-        // }
-        // else
-        // {
-        //     // 下载对应最新的cli
-        //     DownloadNewVersion()
-        //     // 移动当前的版本，将新版本cli放到现有的位置
-        // }
+        // 检查当前版本
+        var version = Assembly.GetAssemblyInformationalVersion();
+        // 检查github上面的版本
+        var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
+        var latestRelease = client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli").Result;
+        var info = client.GetLastApiInfo();
+        var latestVersion = latestRelease.TagName;
+        if (latestVersion == version)
+        {
+            MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
+        }
+        else
+        {
+            // 下载对应最新的cli
+            DownloadNewVersion();
+            // 移动当前的版本，将新版本cli放到现有的位置
+            File.Move(FilePath,FilePath+"old");
+            File.Move(NewFilePath,FilePath);
+        }
     }
 
     private static void DownloadNewVersion()
     {
         var httpClient = new HttpClient();
-        using var fs = new FileStream(NewFilePath, FileMode.CreateNew, FileAccess.Write);
+        if (File.Exists(NewFilePath))
+        {
+            File.Delete(NewFilePath);
+        }
+        using var fs = new FileStream(NewFilePath, FileMode.Create, FileAccess.Write);
         httpClient.GetAsync(DownloadUrl).Result.Content.CopyTo(fs, null, CancellationToken.None);
+        Console.WriteLine("完成下载");
     }
 
-    private static string GetFileName()
+    private static string GetServerFileName()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
