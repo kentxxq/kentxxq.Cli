@@ -27,7 +27,17 @@ public static class RedisCommand
             Db,
             Password
         };
-        command.SetHandler<string, int, int, string, CancellationToken>(Run, Url, Port, Db, Password);
+
+        command.SetHandler(context =>
+        {
+            var url = context.ParseResult.GetValueForArgument(Url);
+            var port = context.ParseResult.GetValueForOption(Port);
+            var db = context.ParseResult.GetValueForOption(Db);
+            var password = context.ParseResult.GetValueForOption(Password);
+            var ct = context.GetCancellationToken();
+            Run(url,port,db,password!,ct);
+        });
+        
         return command;
     }
 

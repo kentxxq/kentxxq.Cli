@@ -17,8 +17,14 @@ internal static class WebSocketCommand
     {
         var command = new Command("ws", "websocket connect");
         command.AddArgument(WebSocketUrl);
+        
+        command.SetHandler(async context =>
+        {
+            var wsUrl = context.ParseResult.GetValueForArgument(WebSocketUrl);
+            var ct = context.GetCancellationToken();
+            await Run(wsUrl, ct);
+        });
 
-        command.SetHandler<Uri, CancellationToken>(Run, WebSocketUrl);
         return command;
     }
 
