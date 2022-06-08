@@ -28,7 +28,7 @@ public static class K8SCommand
             ConfigPath,
             ClusterNamespace
         };
-        command.SetHandler<string, string, string>(Run, SubCommand, ConfigPath, ClusterNamespace);
+        command.SetHandler(Run, SubCommand, ConfigPath, ClusterNamespace);
         return command;
     }
 

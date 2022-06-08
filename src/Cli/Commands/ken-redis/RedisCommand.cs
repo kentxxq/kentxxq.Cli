@@ -35,9 +35,9 @@ public static class RedisCommand
             var db = context.ParseResult.GetValueForOption(Db);
             var password = context.ParseResult.GetValueForOption(Password);
             var ct = context.GetCancellationToken();
-            Run(url,port,db,password!,ct);
+            Run(url, port, db, password!, ct);
         });
-        
+
         return command;
     }
 
