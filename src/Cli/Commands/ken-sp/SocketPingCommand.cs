@@ -33,8 +33,16 @@ public static class SocketPingCommand
             Timeout,
             Quit
         };
-
-        command.SetHandler<string, int, int, bool, CancellationToken>(Run, Url, RetryTimes, Timeout, Quit);
+        
+        command.SetHandler(context =>
+        {
+            var url = context.ParseResult.GetValueForArgument(Url);
+            var retryTimes = context.ParseResult.GetValueForOption(RetryTimes);
+            var timeout = context.ParseResult.GetValueForOption(Timeout);
+            var quit = context.ParseResult.GetValueForOption(Quit);
+            var ct = context.GetCancellationToken();
+            Run(url,retryTimes,timeout,quit,ct);
+        });
         return command;
     }
 

@@ -39,7 +39,7 @@ public static class UpdateCommand
         // else
         // {
         //     // 下载对应最新的cli
-        //     
+        //     DownloadNewVersion()
         //     // 移动当前的版本，将新版本cli放到现有的位置
         // }
     }
