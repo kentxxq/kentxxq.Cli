@@ -7,6 +7,7 @@ using System.Threading;
 using Cli.Utils;
 using kentxxq.Utils;
 using Octokit;
+using Spectre.Console;
 using FileMode = System.IO.FileMode;
 
 namespace Cli.Commands.ken_update;
@@ -17,12 +18,12 @@ public static class UpdateCommand
     /// 国内的下载地址
     /// </summary>
     private const string DownloadServer = @"http://tools.kentxxq.com/";
-    
+
     /// <summary>
     /// 服务器上的文件名称
     /// </summary>
     private static readonly string ServerFileName = GetServerFileName();
-    
+
     /// <summary>
     /// 具体文件下载地址
     /// </summary>
@@ -37,20 +38,17 @@ public static class UpdateCommand
     /// 程序在当前平台上的命名
     /// </summary>
     private static readonly string FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "ken.exe" : "ken";
-    
+
     /// <summary>
     /// 正在执行的程序路径
     /// </summary>
     private static readonly string FilePath = Path.Combine(Directory.GetCurrentDirectory(), FileName);
-    
+
 
     public static Command GetCommand()
     {
         var command = new Command("update", "update ken command");
-        command.SetHandler(context =>
-        {
-            Run();
-        });
+        command.SetHandler(context => { Run(); });
         return command;
     }
 
@@ -58,11 +56,12 @@ public static class UpdateCommand
     {
         // 检查当前版本
         var version = Assembly.GetAssemblyInformationalVersion();
+        MyAnsiConsole.MarkupSuccessLine($"current version:{version}");
         // 检查github上面的版本
         var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
         var latestRelease = client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli").Result;
-        var info = client.GetLastApiInfo();
         var latestVersion = latestRelease.TagName;
+        MyAnsiConsole.MarkupSuccessLine($"latest version:{latestVersion}");
         if (latestVersion == version)
         {
             MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
@@ -70,30 +69,26 @@ public static class UpdateCommand
         else
         {
             // 下载对应最新的cli
-            DownloadNewVersion();
+            AnsiConsole.Status()
+                .Start("Downloading...", ctx => { DownloadNewVersion(); });
+
             // 移动当前的版本，将新版本cli放到现有的位置
-            File.Move(FilePath,FilePath+"old");
-            File.Move(NewFilePath,FilePath);
+            File.Move(FilePath, FilePath + "old");
+            File.Move(NewFilePath, FilePath);
         }
     }
 
     private static void DownloadNewVersion()
     {
         var httpClient = new HttpClient();
-        if (File.Exists(NewFilePath))
-        {
-            File.Delete(NewFilePath);
-        }
+        if (File.Exists(NewFilePath)) File.Delete(NewFilePath);
         using var fs = new FileStream(NewFilePath, FileMode.Create, FileAccess.Write);
         httpClient.GetAsync(DownloadUrl).Result.Content.CopyTo(fs, null, CancellationToken.None);
-        Console.WriteLine("完成下载");
     }
 
     private static string GetServerFileName()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            Console.WriteLine("linux");
             switch (RuntimeInformation.OSArchitecture)
             {
                 // TODO 还少了两个类型
@@ -109,11 +104,8 @@ public static class UpdateCommand
                 default:
                     throw new ArgumentException("unsupported os platform");
             }
-        }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            Console.WriteLine("windows");
             switch (RuntimeInformation.OSArchitecture)
             {
                 case Architecture.Arm:
@@ -129,11 +121,8 @@ public static class UpdateCommand
                 default:
                     throw new ArgumentException("unsupported os platform");
             }
-        }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            Console.WriteLine("osx");
             switch (RuntimeInformation.OSArchitecture)
             {
                 case Architecture.X64:
@@ -147,7 +136,6 @@ public static class UpdateCommand
                 default:
                     throw new ArgumentException("unsupported os platform");
             }
-        }
 
         throw new ArgumentException("unknown os platform");
     }

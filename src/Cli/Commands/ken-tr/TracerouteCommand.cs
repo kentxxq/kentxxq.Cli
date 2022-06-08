@@ -21,7 +21,7 @@ internal static class TracerouteCommand
             HostName
         };
 
-        command.SetHandler(async (TracerouteType tracerouteType) => { await Run(tracerouteType); },
+        command.SetHandler(async tracerouteType => { await Run(tracerouteType); },
             new TracerouteBinder(HostName));
         return command;
     }

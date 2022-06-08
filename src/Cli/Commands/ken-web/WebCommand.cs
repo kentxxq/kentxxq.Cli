@@ -21,7 +21,7 @@ public static class WebCommand
             Webroot,
             Port
         };
-        command.SetHandler<string, int>(Run, Webroot, Port);
+        command.SetHandler(Run, Webroot, Port);
         return command;
     }
 
