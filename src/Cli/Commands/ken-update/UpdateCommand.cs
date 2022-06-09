@@ -176,6 +176,13 @@ public static class UpdateCommand
                     File.Move(FilePath,  OldFilePath);
                     // 将新版本cli放到现有的位置
                     File.Move(NewFilePath, FilePath);
+                    
+                    // 授权可执行
+                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        Exec($"chmod +x FilePath");
+                    }
+                    
                     MyAnsiConsole.MarkupSuccessLine("update successfully");
                 }
             });
@@ -212,6 +219,31 @@ public static class UpdateCommand
             MyAnsiConsole.MarkupErrorLine($"{version} not found!!!");
             return false;
         }
+    }
+    
+    /// <summary>
+    /// 执行bash命令
+    /// </summary>
+    /// <param name="cmd"></param>
+    public static void Exec(string cmd)
+    {
+        var escapedArgs = cmd.Replace("\"", "\\\"");
+        
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                FileName = "/bin/bash",
+                Arguments = $"-c \"{escapedArgs}\""
+            }
+        };
+
+        process.Start();
+        process.WaitForExit();
     }
 
     /// <summary>
