@@ -10,12 +10,24 @@ namespace Cli.Commands.ken_redis;
 
 public static class RedisCommand
 {
+    /// <summary>
+    /// redis连接地址
+    /// </summary>
     private static readonly Argument<string> Url = new("url", "url: redis.com");
 
+    /// <summary>
+    /// redis的端口号，默认6379
+    /// </summary>
     private static readonly Option<int> Port = new(new[] { "-port", "--serverPort" }, () => 6379, "default:6379");
 
+    /// <summary>
+    /// 连接的db，默认为0
+    /// </summary>
     private static readonly Option<int> Db = new(new[] { "-db", "--database" }, () => 0, "default:0");
 
+    /// <summary>
+    /// 连接redis时的密码，默认为空
+    /// </summary>
     private static readonly Option<string> Password = new(new[] { "-p", "--password" }, () => "", "default empty");
 
     public static Command GetCommand()
