@@ -51,14 +51,29 @@ public static class UpdateCommand
     // private static readonly string FilePath = Path.Combine(Directory.GetCurrentDirectory(), FileName);
     private static readonly string FilePath = Path.Combine(AppContext.BaseDirectory, FileName);
 
+    /// <summary>
+    /// 强制升级
+    /// </summary>
     private static readonly Option<bool> Force = new(new[] { "-f", "--force" }, () => false,
         "force update current version");
     
+    /// <summary>
+    /// 指定版本号
+    /// </summary>
     private static readonly Option<string> Version = new(new[] { "-kv", "--ken-version" },
         "force upgrade to specific current version");
     
+    /// <summary>
+    /// 在中国就启用代理地址
+    /// </summary>
     private static readonly Option<bool> China = new(new[] { "-cn", "--china" },
         "use proxy url");
+    
+    /// <summary>
+    /// 请求github-api的token，默认每小时60次请求限制
+    /// </summary>
+    private static readonly Option<string> Token = new(new[] { "-t", "--token" },()=>"",
+        "github token for query github-api");
 
 
     public static Command GetCommand()
@@ -67,13 +82,14 @@ public static class UpdateCommand
         {
             Force,
             Version,
-            China
+            China,
+            Token
         };
-        command.SetHandler(Run,Force,Version,China);
+        command.SetHandler(Run,Force,Version,China,Token);
         return command;
     }
 
-    private static void Run(bool force,string version,bool cn)
+    private static void Run(bool force,string version,bool cn,string token)
     {
         // 输出基本信息
         MyAnsiConsole.MarkupSuccessLine($"current file: {FilePath}");
@@ -89,6 +105,10 @@ public static class UpdateCommand
         if (version.IsNullOrEmpty())
         {
             var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
+            if (!token.IsNullOrEmpty())
+            {
+                client.Credentials = new Credentials(token);
+            }
             var latestRelease = client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli").Result;
             version = latestRelease.TagName;
             MyAnsiConsole.MarkupSuccessLine($"latest version:{version}");
