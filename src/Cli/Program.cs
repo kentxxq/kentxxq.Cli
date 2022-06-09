@@ -1,15 +1,14 @@
 ﻿using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using Cli.Commands;
+using Cli.Utils;
 
 await AllCommands.BuildCommandLine()
     .UseDefaults()
-#if !DEBUG
     .UseExceptionHandler((exception, context) =>
     {
         MyAnsiConsole.MarkupErrorLine($"{exception.Message}");
     },1)
-#endif
     .Build()
 #if DEBUG
     // .InvokeAsync(new string[] { "ss" });
