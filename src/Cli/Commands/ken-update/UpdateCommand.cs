@@ -42,7 +42,8 @@ public static class UpdateCommand
     /// <summary>
     /// 正在执行的程序路径
     /// </summary>
-    private static readonly string FilePath = Path.Combine(Directory.GetCurrentDirectory(), FileName);
+    // private static readonly string FilePath = Path.Combine(Directory.GetCurrentDirectory(), FileName);
+    private static readonly string FilePath = Path.Combine(AppContext.BaseDirectory,FileName);
 
 
     public static Command GetCommand()
@@ -73,7 +74,7 @@ public static class UpdateCommand
                 .Start("Downloading...", ctx => { DownloadNewVersion(); });
 
             // 移动当前的版本，将新版本cli放到现有的位置
-            File.Move(FilePath, FilePath + "old");
+            File.Move(FilePath, "old"+FilePath );
             File.Move(NewFilePath, FilePath);
         }
     }
