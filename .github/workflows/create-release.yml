@@ -7,7 +7,7 @@ on:
 #      - "master"
 #      - "test"
 
-concurrency: ci-${{ github.ref }}
+concurrency: cicd
 
 jobs:
   create-release:
