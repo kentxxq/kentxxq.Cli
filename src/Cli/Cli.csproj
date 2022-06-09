@@ -30,7 +30,7 @@
     <PropertyGroup>
         <!-- https://docs.microsoft.com/zh-cn/dotnet/core/project-sdk/msbuild-props#generateassemblyinfo -->
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-        <InformationalVersion>1.2.9</InformationalVersion>
+        <InformationalVersion>1.2.10</InformationalVersion>
     </PropertyGroup>
 
 </Project>
