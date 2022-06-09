@@ -20,7 +20,7 @@ await AllCommands.BuildCommandLine()
 // .InvokeAsync(new[] { "redis", "bwd.kentxxq.com","-p didi" });
     // .InvokeAsync(new[] { "k8s", "get-restarted-pod" });
     // .InvokeAsync(new[] { "web" });
-    .InvokeAsync(new[] { "update","-f" });
+    .InvokeAsync(new[] { "update","-kv","1.2.7" });
 #else
       .InvokeAsync(args);
       //.InvokeAsync(new string[] { "tr" });

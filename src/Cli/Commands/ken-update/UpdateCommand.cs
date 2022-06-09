@@ -1,9 +1,11 @@
 ﻿using System;
 using System.CommandLine;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Cli.Utils;
 using kentxxq.Utils;
 using Microsoft.IdentityModel.Tokens;
@@ -23,7 +25,7 @@ public static class UpdateCommand
     /// <summary>
     /// China下载地址
     /// </summary>
-    private const string ChinaDownloadServer = @"https://github.abskoop.workers.dev/https://github.com/kentxxq/kentxxq.Cli/releases/download/";
+    private const string ProxyDownloadServer = @"https://github.abskoop.workers.dev/https://github.com/kentxxq/kentxxq.Cli/releases/download/";
     
     /// <summary>
     /// 服务器上的文件名称
@@ -52,6 +54,12 @@ public static class UpdateCommand
     private static readonly string FilePath = Path.Combine(AppContext.BaseDirectory, FileName);
 
     /// <summary>
+    /// 当前程序的版本号
+    /// </summary>
+    private static readonly string CurrentVersion = Assembly.GetAssemblyInformationalVersion()!;
+    
+
+    /// <summary>
     /// 强制升级
     /// </summary>
     private static readonly Option<bool> Force = new(new[] { "-f", "--force" }, () => false,
@@ -66,7 +74,7 @@ public static class UpdateCommand
     /// <summary>
     /// 在中国就启用代理地址
     /// </summary>
-    private static readonly Option<bool> China = new(new[] { "-cn", "--china" },
+    private static readonly Option<bool> Proxy = new(new[] { "-p", "--proxy" },
         "use proxy url");
     
     /// <summary>
@@ -82,77 +90,135 @@ public static class UpdateCommand
         {
             Force,
             Version,
-            China,
+            Proxy,
             Token
         };
-        command.SetHandler(Run,Force,Version,China,Token);
+        
+        command.SetHandler(async context =>
+        {
+            var force = context.ParseResult.GetValueForOption(Force);
+            var specificVersion = context.ParseResult.GetValueForOption(Version);
+            var proxy = context.ParseResult.GetValueForOption(Proxy);
+            var token = context.ParseResult.GetValueForOption(Token);
+            // 需要下载的版本号
+            var downloadVersion = specificVersion;
+            // 打印当前信息
+            PrintCurrentInformation();
+            // 如果没有指定版本，则拿到最新版本号
+            if (specificVersion.IsNullOrEmpty())
+            {
+                try
+                {
+                    downloadVersion = await GetLatestVersion(token!);
+                }
+                catch (RateLimitExceededException e)
+                {
+                    MyAnsiConsole.MarkupErrorLine($"{e.Message}. you can set token through -t");
+                    context.ExitCode = 1;
+                    return;
+                }
+                MyAnsiConsole.MarkupSuccessLine($"latest version:{downloadVersion}");
+            }
+            // 判断是否更新程序
+            if (!force && CurrentVersion == downloadVersion)
+            {
+                MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
+            }
+            else
+            {
+                await UpdateKen(downloadVersion!,proxy);
+                
+            }
+        });
         return command;
     }
 
-    private static void Run(bool force,string version,bool cn,string token)
+    /// <summary>
+    /// 输出当前的程序信息
+    /// </summary>
+    private static void PrintCurrentInformation()
     {
-        // 输出基本信息
         MyAnsiConsole.MarkupSuccessLine($"current file: {FilePath}");
-#if DEBUG
-        MyAnsiConsole.MarkupSuccessLine($"new current file: {NewFilePath}");
-        MyAnsiConsole.MarkupSuccessLine($"old current file: {OldFilePath}");
-#endif
-        // 检查当前版本
-        var currentVersion = Assembly.GetAssemblyInformationalVersion();
-        MyAnsiConsole.MarkupSuccessLine($"current version:{currentVersion}");
-
-        // 没有指定版本，那就从github获取最新的版本
-        if (version.IsNullOrEmpty())
-        {
-            var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
-            if (!token.IsNullOrEmpty())
-            {
-                client.Credentials = new Credentials(token);
-            }
-            var latestRelease = client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli").Result;
-            version = latestRelease.TagName;
-            MyAnsiConsole.MarkupSuccessLine($"latest version:{version}");
-        }
-        
-        if (currentVersion == version && !force)
-        {
-            MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
-        }
-        else
-        {
-            
-            AnsiConsole.Status()
-                .Start("Downloading...", ctx =>
-                {
-                    // 下载对应最新的cli
-                    DownloadNewVersion(version,cn);
-                });
-            
-            // 移动当前的版本，将新版本cli放到现有的位置
-            if (File.Exists(OldFilePath)) File.Delete(OldFilePath);
-            File.Move(FilePath,  OldFilePath);
-            File.Move(NewFilePath, FilePath);
-            MyAnsiConsole.MarkupSuccessLine("update successfully");
-        }
+        MyAnsiConsole.MarkupSuccessLine($"current version:{CurrentVersion}");
     }
 
-    private static void DownloadNewVersion(string version,bool cn)
+    /// <summary>
+    /// 获取github上最新的版本号
+    /// </summary>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    private static async Task<string> GetLatestVersion(string token)
+    {
+        var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
+        if (!token.IsNullOrEmpty())
+        {
+            client.Credentials = new Credentials(token);
+        }
+
+        var latestRelease = await client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli");
+        return latestRelease.TagName;
+    }
+
+    /// <summary>
+    /// 更新本体
+    /// </summary>
+    private static async Task UpdateKen(string version,bool proxy)
+    {
+        // 下载对应最新的cli
+        await AnsiConsole.Status()
+            .StartAsync("Downloading...", async ctx =>
+            {
+                var ok = await DownloadNewVersion(version!,proxy);
+                if (ok)
+                {
+                    if (File.Exists(OldFilePath)) File.Delete(OldFilePath);
+                    // 移动当前的版本
+                    File.Move(FilePath,  OldFilePath);
+                    // 将新版本cli放到现有的位置
+                    File.Move(NewFilePath, FilePath);
+                    MyAnsiConsole.MarkupSuccessLine("update successfully");
+                }
+            });
+    }
+
+    /// <summary>
+    /// 下载最新的版本
+    /// </summary>
+    /// <param name="version">特定的版本号</param>
+    /// <param name="proxy">是否启用代理</param>
+    private static async Task<bool> DownloadNewVersion(string version,bool proxy)
     {
         var httpClient = new HttpClient();
         if (File.Exists(NewFilePath)) File.Delete(NewFilePath);
-        using var fs = new FileStream(NewFilePath, FileMode.Create, FileAccess.Write);
+        await using var fs = new FileStream(NewFilePath, FileMode.Create, FileAccess.Write);
         string url;
-        if (cn)
+        if (proxy)
         {
-            url = ChinaDownloadServer + version + "/" + ServerFileName;
+            url = ProxyDownloadServer + version + "/" + ServerFileName;
         }
         else
         {
             url = DownloadServer + version + "/" + ServerFileName;
         }
-        httpClient.GetAsync(url).Result.Content.CopyTo(fs, null, CancellationToken.None);
+
+        var res = await httpClient.GetAsync(url);
+        if (res.IsSuccessStatusCode)
+        {
+            await res.Content.CopyToAsync(fs);
+            return true;
+        }
+        else
+        {
+            MyAnsiConsole.MarkupErrorLine($"{version} not found!!!");
+            return false;
+        }
     }
 
+    /// <summary>
+    /// 根据不同平台，拿到服务器上对应的文件名。例如ken-win-x64.exe
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     private static string GetServerFileName()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
