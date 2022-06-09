@@ -33,12 +33,12 @@ public static class UpdateCommand
     /// <summary>
     /// 新版本程序下载后的地址
     /// </summary>
-    private static readonly string NewFilePath = Path.Combine(Directory.GetCurrentDirectory(), ServerFileName + "new");
+    private static readonly string NewFilePath = Path.Combine(AppContext.BaseDirectory, ServerFileName + "new");
     
     /// <summary>
     /// 老版本程序的备份地址
     /// </summary>
-    private static readonly string OldFilePath = Path.Combine(Directory.GetCurrentDirectory(), ServerFileName + "old");
+    private static readonly string OldFilePath = Path.Combine(AppContext.BaseDirectory, ServerFileName + "old");
 
     /// <summary>
     /// 程序在当前平台上的命名
@@ -100,9 +100,13 @@ public static class UpdateCommand
         }
         else
         {
-            // 下载对应最新的cli
+            
             AnsiConsole.Status()
-                .Start("Downloading...", ctx => { DownloadNewVersion(version,cn); });
+                .Start("Downloading...", ctx =>
+                {
+                    // 下载对应最新的cli
+                    DownloadNewVersion(version,cn);
+                });
             
             // 移动当前的版本，将新版本cli放到现有的位置
             if (File.Exists(OldFilePath)) File.Delete(OldFilePath);
