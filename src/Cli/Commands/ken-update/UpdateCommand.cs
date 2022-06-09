@@ -33,6 +33,11 @@ public static class UpdateCommand
     /// 新版本程序下载后的地址
     /// </summary>
     private static readonly string NewFilePath = Path.Combine(Directory.GetCurrentDirectory(), ServerFileName + "new");
+    
+    /// <summary>
+    /// 老版本程序的备份地址
+    /// </summary>
+    private static readonly string OldFilePath = Path.Combine(Directory.GetCurrentDirectory(), ServerFileName + "old");
 
     /// <summary>
     /// 程序在当前平台上的命名
@@ -45,15 +50,21 @@ public static class UpdateCommand
     // private static readonly string FilePath = Path.Combine(Directory.GetCurrentDirectory(), FileName);
     private static readonly string FilePath = Path.Combine(AppContext.BaseDirectory, FileName);
 
+    private static readonly Option<bool> Force = new(new[] { "-f", "--force" }, () => false,
+        "force update current version");
+
 
     public static Command GetCommand()
     {
-        var command = new Command("update", "update ken command");
-        command.SetHandler(context => { Run(); });
+        var command = new Command("update", "update ken command")
+        {
+            Force
+        };
+        command.SetHandler(Run,Force);
         return command;
     }
 
-    private static void Run()
+    private static void Run(bool force)
     {
         // 检查当前版本
         var version = Assembly.GetAssemblyInformationalVersion();
@@ -63,7 +74,7 @@ public static class UpdateCommand
         var latestRelease = client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli").Result;
         var latestVersion = latestRelease.TagName;
         MyAnsiConsole.MarkupSuccessLine($"latest version:{latestVersion}");
-        if (latestVersion == version)
+        if (latestVersion == version && !force)
         {
             MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
         }
@@ -72,10 +83,12 @@ public static class UpdateCommand
             // 下载对应最新的cli
             AnsiConsole.Status()
                 .Start("Downloading...", ctx => { DownloadNewVersion(); });
-
+            
             // 移动当前的版本，将新版本cli放到现有的位置
-            File.Move(FilePath, "old" + FilePath);
+            if (File.Exists(OldFilePath)) File.Delete(OldFilePath);
+            File.Move(FilePath,  OldFilePath);
             File.Move(NewFilePath, FilePath);
+            MyAnsiConsole.MarkupSuccessLine("update successfully");
         }
     }
 

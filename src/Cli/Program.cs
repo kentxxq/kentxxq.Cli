@@ -13,7 +13,7 @@ await AllCommands.BuildCommandLine()
 // .InvokeAsync(new[] { "redis", "bwd.kentxxq.com","-p didi" });
     // .InvokeAsync(new[] { "k8s", "get-restarted-pod" });
     // .InvokeAsync(new[] { "web" });
-    .InvokeAsync(new[] { "update" });
+    .InvokeAsync(new[] { "update","-f" });
 #else
       .InvokeAsync(args);
       //.InvokeAsync(new string[] { "tr" });
