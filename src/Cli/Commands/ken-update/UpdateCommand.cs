@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Cli.Utils;
 using kentxxq.Utils;
+using Microsoft.IdentityModel.Tokens;
 using Octokit;
 using Spectre.Console;
 using FileMode = System.IO.FileMode;
@@ -15,20 +16,20 @@ namespace Cli.Commands.ken_update;
 public static class UpdateCommand
 {
     /// <summary>
-    /// 国内的下载地址
+    /// 下载地址
     /// </summary>
-    private const string DownloadServer = @"http://tools.kentxxq.com/";
-
+    private const string DownloadServer = @"https://github.com/kentxxq/kentxxq.Cli/releases/download/";
+    
+    /// <summary>
+    /// China下载地址
+    /// </summary>
+    private const string ChinaDownloadServer = @"https://github.abskoop.workers.dev/https://github.com/kentxxq/kentxxq.Cli/releases/download/";
+    
     /// <summary>
     /// 服务器上的文件名称
     /// </summary>
     private static readonly string ServerFileName = GetServerFileName();
-
-    /// <summary>
-    /// 具体文件下载地址
-    /// </summary>
-    private static readonly string DownloadUrl = DownloadServer + ServerFileName;
-
+    
     /// <summary>
     /// 新版本程序下载后的地址
     /// </summary>
@@ -52,29 +53,48 @@ public static class UpdateCommand
 
     private static readonly Option<bool> Force = new(new[] { "-f", "--force" }, () => false,
         "force update current version");
+    
+    private static readonly Option<string> Version = new(new[] { "-kv", "--ken-version" },
+        "force upgrade to specific current version");
+    
+    private static readonly Option<bool> China = new(new[] { "-cn", "--china" },
+        "use proxy url");
 
 
     public static Command GetCommand()
     {
         var command = new Command("update", "update ken command")
         {
-            Force
+            Force,
+            Version,
+            China
         };
-        command.SetHandler(Run,Force);
+        command.SetHandler(Run,Force,Version,China);
         return command;
     }
 
-    private static void Run(bool force)
+    private static void Run(bool force,string version,bool cn)
     {
+        // 输出基本信息
+        MyAnsiConsole.MarkupSuccessLine($"current file: {FilePath}");
+#if DEBUG
+        MyAnsiConsole.MarkupSuccessLine($"new current file: {NewFilePath}");
+        MyAnsiConsole.MarkupSuccessLine($"old current file: {OldFilePath}");
+#endif
         // 检查当前版本
-        var version = Assembly.GetAssemblyInformationalVersion();
-        MyAnsiConsole.MarkupSuccessLine($"current version:{version}");
-        // 检查github上面的版本
-        var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
-        var latestRelease = client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli").Result;
-        var latestVersion = latestRelease.TagName;
-        MyAnsiConsole.MarkupSuccessLine($"latest version:{latestVersion}");
-        if (latestVersion == version && !force)
+        var currentVersion = Assembly.GetAssemblyInformationalVersion();
+        MyAnsiConsole.MarkupSuccessLine($"current version:{currentVersion}");
+
+        // 没有指定版本，那就从github获取最新的版本
+        if (version.IsNullOrEmpty())
+        {
+            var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
+            var latestRelease = client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli").Result;
+            version = latestRelease.TagName;
+            MyAnsiConsole.MarkupSuccessLine($"latest version:{version}");
+        }
+        
+        if (currentVersion == version && !force)
         {
             MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
         }
@@ -82,7 +102,7 @@ public static class UpdateCommand
         {
             // 下载对应最新的cli
             AnsiConsole.Status()
-                .Start("Downloading...", ctx => { DownloadNewVersion(); });
+                .Start("Downloading...", ctx => { DownloadNewVersion(version,cn); });
             
             // 移动当前的版本，将新版本cli放到现有的位置
             if (File.Exists(OldFilePath)) File.Delete(OldFilePath);
@@ -92,12 +112,21 @@ public static class UpdateCommand
         }
     }
 
-    private static void DownloadNewVersion()
+    private static void DownloadNewVersion(string version,bool cn)
     {
         var httpClient = new HttpClient();
         if (File.Exists(NewFilePath)) File.Delete(NewFilePath);
         using var fs = new FileStream(NewFilePath, FileMode.Create, FileAccess.Write);
-        httpClient.GetAsync(DownloadUrl).Result.Content.CopyTo(fs, null, CancellationToken.None);
+        string url;
+        if (cn)
+        {
+            url = ChinaDownloadServer + version + "/" + ServerFileName;
+        }
+        else
+        {
+            url = DownloadServer + version + "/" + ServerFileName;
+        }
+        httpClient.GetAsync(url).Result.Content.CopyTo(fs, null, CancellationToken.None);
     }
 
     private static string GetServerFileName()
