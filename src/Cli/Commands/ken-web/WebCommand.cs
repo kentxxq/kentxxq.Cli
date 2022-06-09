@@ -11,7 +11,14 @@ namespace Cli.Commands.ken_web;
 
 public static class WebCommand
 {
+    /// <summary>
+    /// web的根路径
+    /// </summary>
     private static readonly Option<string> Webroot = new(new[] { "-w", "--webroot" }, () => ".", "file path");
+    
+    /// <summary>
+    /// http-server的端口
+    /// </summary>
     private static readonly Option<int> Port = new(new[] { "-p", "--port" }, () => 5000, "http port");
 
     public static Command GetCommand()

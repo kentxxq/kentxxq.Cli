@@ -13,13 +13,25 @@ namespace Cli.Commands.ken_sp;
 
 public static class SocketPingCommand
 {
+    /// <summary>
+    /// 需要测试的地址
+    /// </summary>
     private static readonly Argument<string> Url = new("url", "url: kentxxq.com:443");
 
+    /// <summary>
+    /// 重试的次数
+    /// </summary>
     private static readonly Option<int> RetryTimes = new(new[] { "-n", "--retryTimes" }, () => 0,
         "default:0,retry forever");
 
+    /// <summary>
+    /// 每次连接的超时时间
+    /// </summary>
     private static readonly Option<int> Timeout = new(new[] { "-t", "--timeout" }, () => 2, "default:2 seconds");
 
+    /// <summary>
+    /// 连接成功后是否退出
+    /// </summary>
     private static readonly Option<bool> Quit = new(new[] { "-q", "--quit" }, () => false,
         "Quit after connection succeeded");
 
