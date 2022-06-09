@@ -1,9 +1,16 @@
 ﻿using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using Cli.Commands;
+using Cli.Utils;
+using Spectre.Console;
 
 await AllCommands.BuildCommandLine()
     .UseDefaults()
+    .UseExceptionHandler((exception, context) =>
+    {
+        MyAnsiConsole.MarkupErrorLine("internal error");
+        AnsiConsole.WriteException(exception);
+    },1)
     .Build()
 #if DEBUG
     // .InvokeAsync(new string[] { "ss" });
