@@ -15,7 +15,7 @@ public static class WebCommand
     /// web的根路径
     /// </summary>
     private static readonly Option<string> Webroot = new(new[] { "-w", "--webroot" }, () => ".", "file path");
-    
+
     /// <summary>
     /// http-server的端口
     /// </summary>
