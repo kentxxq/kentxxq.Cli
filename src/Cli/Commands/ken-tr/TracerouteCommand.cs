@@ -1,9 +1,11 @@
 ﻿using System;
 using System.CommandLine;
 using System.Net;
+using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using Cli.Utils;
+using kentxxq.Utils;
 using Masuit.Tools;
 using Spectre.Console;
 
@@ -12,7 +14,7 @@ namespace Cli.Commands.ken_tr;
 internal static class TracerouteCommand
 {
     private static readonly Argument<string> HostName = new("url", () => "kentxxq.com", "traceroute kentxxq.com");
-
+    
     public static Command GetCommand()
     {
         var command = new Command("tr",
@@ -21,97 +23,102 @@ internal static class TracerouteCommand
             HostName
         };
 
-        command.SetHandler(async tracerouteType => { await Run(tracerouteType); },
-            new TracerouteBinder(HostName));
+        // command.SetHandler(async tracerouteType => { await Run(tracerouteType); },
+        //     new TracerouteBinder(HostName));
+        
+        command.SetHandler(async context =>
+        {
+            var hostname = context.ParseResult.GetValueForArgument(HostName);
+            
+            // 测试连接
+            TryConnect(hostname);
+
+            await Run(hostname);
+        });
+        
         return command;
     }
 
-    private static async Task Run(TracerouteType tracerouteType)
+    /// <summary>
+    /// 尝试连接主机
+    /// </summary>
+    /// <param name="hostname"></param>
+    private static void TryConnect(string hostname)
     {
-        var url = tracerouteType.HostName;
+        AnsiConsole.Markup($"try connecting to {hostname} ...");
+        var reply = Connection.Ping(hostname);
+        if (reply.Status == IPStatus.Success)
+        {
+            MyAnsiConsole.MarkupSuccessLine("success");
+        }
+        else
+        {
+            MyAnsiConsole.MarkupWarningLine("failed");
+        }
+    }
 
-        // 尝试连接目标主机
-        Console.Write($"try connecting to {url} ...");
-        var reply = tracerouteType.ConnectService.Ping(url);
-
-        for (var i = 0; i < 2; i++)
-            if (reply.Status == IPStatus.Success)
-            {
-                AnsiConsole.MarkupLine("[green]success[/]");
-                break;
-            }
-            else
-            {
-                reply = tracerouteType.ConnectService.Ping(url);
-                if (i == 1) AnsiConsole.MarkupLine("[red]failed[/]");
-            }
-
-
+    private static async Task Run(string hostname)
+    {
         var ttl = 1;
-        reply = tracerouteType.ConnectService.Ping(url, ttl);
+        // 目标主机的实际ip
+        var hostIp = (await Dns.GetHostAddressesAsync(hostname))[0].ToString();
+        var reply = Connection.Ping(hostname, ttl);
+        
+        // ttl为1的时候，可能会出现超时。会导致reply内的ip显示为目标主机ip。所以需要重新ping，拿到第二次的reply结果再进入循环
         if (reply.Status == IPStatus.TimedOut)
         {
             MyAnsiConsole.MarkupWarningLine($"{ttl} request timeout");
             ttl += 1;
-            reply = tracerouteType.ConnectService.Ping(url, ttl);
+            reply = Connection.Ping(hostname, ttl);
         }
-
-        reply = tracerouteType.ConnectService.Ping(reply.Address.ToString());
-        while (ttl < 255 && reply.Address.ToString() != (await Dns.GetHostAddressesAsync(url))[0].ToString())
+        
+        // 准备循环遍历中间网络节点
+        while (ttl < 255 && reply.Address.ToString() != hostIp)
         {
             Console.Write($"{ttl} {reply.Address} take {reply.RoundtripTime}ms ");
-            if (reply.Address.ToString().IsPrivateIP())
-            {
-                try
-                {
-                    AnsiConsole.MarkupLine($"[green]{(await Dns.GetHostEntryAsync(reply.Address)).HostName}[/]");
-                }
-                catch (Exception)
-                {
-                    AnsiConsole.MarkupLine("[orange3]unknown host[/]");
-                }
-            }
-            else
-            {
-                var result =
-                    await tracerouteType.IpService.GetIpInfoByIp(
-                        (await Dns.GetHostAddressesAsync(reply.Address.ToString()))[0]
-                        .ToString());
-                MyAnsiConsole.MarkupSuccessLine(result.ToString());
-            }
+            await PrintRegionByIp(reply.Address.ToString());
 
             ttl += 1;
-            reply = tracerouteType.ConnectService.Ping(url, ttl);
+            reply = Connection.Ping(hostname, ttl);
+            // 如果超时，就输出timeout然后继续下个节点
             while (reply.Status == IPStatus.TimedOut)
             {
                 MyAnsiConsole.MarkupWarningLine($"{ttl} request timeout");
                 ttl += 1;
-                tracerouteType.ConnectService.Ping(reply.Address.ToString());
-                reply = tracerouteType.ConnectService.Ping(url, ttl);
+                reply = Connection.Ping(hostname, ttl);
             }
-
-            reply = tracerouteType.ConnectService.Ping(reply.Address.ToString());
         }
 
-        Console.Write($"{ttl} {reply.Address} ");
-        if (reply.Address.ToString().IsPrivateIP())
+        // 循环跳出的时候，不包含目标地址。所以需要多来一次
+        Console.Write($"{ttl} {reply.Address} take {reply.RoundtripTime}ms ");
+        await PrintRegionByIp(reply.Address.ToString());
+    }
+
+    /// <summary>
+    /// 打印ip的地域信息
+    /// </summary>
+    /// <param name="ip"></param>
+    private static async Task PrintRegionByIp(string ip)
+    {
+        var ipTool = new IP(new HttpClient());
+        if (ip.IsPrivateIP())
         {
             try
             {
-                AnsiConsole.Markup($"[green]{(await Dns.GetHostEntryAsync(reply.Address)).HostName}[/]");
+                AnsiConsole.MarkupLine($"[green]{(await Dns.GetHostEntryAsync(ip)).HostName}[/]");
             }
             catch (Exception)
             {
-                AnsiConsole.Markup("[orange3]unknown host[/]");
+                AnsiConsole.MarkupLine("[orange3]unknown host[/]");
             }
         }
         else
         {
             var result =
-                await tracerouteType.IpService.GetIpInfoByIp(
-                    (await Dns.GetHostAddressesAsync(reply.Address.ToString()))[0]
+                await ipTool.GetIpInfoByIp(
+                    (await Dns.GetHostAddressesAsync(ip))[0]
                     .ToString());
-            Console.Write(result.ToString());
+            MyAnsiConsole.MarkupSuccessLine(result.ToString());
         }
     }
 }
