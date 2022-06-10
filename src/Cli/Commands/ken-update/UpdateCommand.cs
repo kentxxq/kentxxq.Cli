@@ -114,8 +114,7 @@ public static class UpdateCommand
                     context.ExitCode = 1;
                     return;
                 }
-
-                MyAnsiConsole.MarkupSuccessLine($"latest version:{downloadVersion}");
+                AnsiConsole.MarkupLine($"latest version:{downloadVersion}");
             }
 
             // 判断是否更新程序
@@ -132,8 +131,8 @@ public static class UpdateCommand
     /// </summary>
     private static void PrintCurrentInformation()
     {
-        MyAnsiConsole.MarkupSuccessLine($"current file: {FilePath}");
-        MyAnsiConsole.MarkupSuccessLine($"current version:{CurrentVersion}");
+        AnsiConsole.MarkupLine($"current file: {FilePath}");
+        AnsiConsole.MarkupLine($"current version:{CurrentVersion}");
     }
 
     /// <summary>
