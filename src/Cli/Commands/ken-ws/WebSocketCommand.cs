@@ -31,16 +31,8 @@ internal static class WebSocketCommand
     private static async Task Run(Uri wsUrl, CancellationToken ct)
     {
         var ws = new ClientWebSocket();
-        try
-        {
-            await ws.ConnectAsync(wsUrl, ct);
-        }
-        catch (Exception e)
-        {
-            MyAnsiConsole.MarkupErrorLine($"connect failed:{e.Message}");
-            return;
-        }
-
+        await ws.ConnectAsync(wsUrl, ct);
+        
         var buffer = new byte[1024 * 4];
         Console.CancelKeyPress += (_, _) => { Process.GetCurrentProcess().Kill(); };
         while (!ct.IsCancellationRequested)
