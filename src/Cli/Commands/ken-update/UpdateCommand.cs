@@ -49,15 +49,13 @@ public static class UpdateCommand
     /// <summary>
     /// 正在执行的程序路径
     /// </summary>
-    // private static readonly string FilePath = Path.Combine(Directory.GetCurrentDirectory(), FileName);
     private static readonly string FilePath = Path.Combine(AppContext.BaseDirectory, FileName);
 
     /// <summary>
     /// 当前程序的版本号
     /// </summary>
     private static readonly string CurrentVersion = Assembly.GetAssemblyInformationalVersion()!;
-
-
+    
     /// <summary>
     /// 强制升级
     /// </summary>
@@ -216,7 +214,7 @@ public static class UpdateCommand
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             switch (RuntimeInformation.OSArchitecture)
             {
-                // TODO 还少了两个类型
+                // TODO 还少了musl
                 case Architecture.Arm:
                     return "ken-linux-arm";
                 case Architecture.Arm64:
