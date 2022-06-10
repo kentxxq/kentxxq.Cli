@@ -14,11 +14,11 @@ await AllCommands.BuildCommandLine()
     // .InvokeAsync(new string[] { "ss" });
     // .InvokeAsync(new[] { "tr", "kentxxq.com" });
 // .InvokeAsync(new[] { "ws", "wss://ws.kentxxq.com/ws" });
-// .InvokeAsync(new[] { "sp", "kentxxq.com:443", "-t 2", "-q" });
+.InvokeAsync(new[] { "sp", "kentxxq.com:443", "-t 2","-n 5" });
 // .InvokeAsync(new[] { "redis", "bwd.kentxxq.com","-p didi" });
     // .InvokeAsync(new[] { "k8s", "get-restarted-pod" });
     // .InvokeAsync(new[] { "web" });
-    .InvokeAsync(new[] { "update", "-f" });
+    // .InvokeAsync(new[] { "update", "-f" });
 #else
       .InvokeAsync(args);
       //.InvokeAsync(new string[] { "tr" });

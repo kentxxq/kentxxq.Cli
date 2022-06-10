@@ -4,10 +4,12 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using Cli.Extensions;
 using Cli.Utils;
 using kentxxq.Extensions.String;
 using Spectre.Console;
+using static System.Threading.Tasks.Task;
 
 namespace Cli.Commands.ken_sp;
 
@@ -35,7 +37,11 @@ public static class SocketPingCommand
     private static readonly Option<bool> Quit = new(new[] { "-q", "--quit" }, () => false,
         "Quit after connection succeeded");
 
-
+    /// <summary>
+    /// 存放连接结果
+    /// </summary>
+    private static bool _result = false;
+    
     public static Command GetCommand()
     {
         var command = new Command("sp", "socket ping")
@@ -45,81 +51,58 @@ public static class SocketPingCommand
             Timeout,
             Quit
         };
-
-        command.SetHandler(context =>
+        
+        command.SetHandler(async context =>
         {
             var url = context.ParseResult.GetValueForArgument(Url);
             var retryTimes = context.ParseResult.GetValueForOption(RetryTimes);
             var timeout = context.ParseResult.GetValueForOption(Timeout);
             var quit = context.ParseResult.GetValueForOption(Quit);
             var ct = context.GetCancellationToken();
-            Run(url, retryTimes, timeout, quit, ct);
+            
+            var ipEndPoint = url.UrlToIPEndPoint();
+            if (retryTimes == 0)
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    _result = await Connect(ipEndPoint, timeout, ct);
+                    Thread.Sleep(500);
+                    if (_result && quit) return;
+                }
+            }
+            else
+            {
+                for (var i = 0; i < retryTimes; i++)
+                {
+                    _result = await Connect(ipEndPoint, timeout, ct);
+                    if ((_result && quit) || ct.IsCancellationRequested) return;
+                }
+            }
         });
         return command;
     }
 
-
-    private static void Run(string url, int retryTimes, int timeout, bool quit, CancellationToken ct)
-    {
-        bool result;
-
-        IPEndPoint ipEndPoint;
-        try
-        {
-            ipEndPoint = url.UrlToIPEndPoint();
-        }
-        catch (Exception e)
-        {
-            MyAnsiConsole.MarkupErrorLine($"parse error:{e.Message}");
-            return;
-        }
-
-
-        if (retryTimes == 0)
-        {
-            while (!ct.IsCancellationRequested)
-            {
-                result = Connect(ipEndPoint, timeout, ct);
-                Thread.Sleep(500);
-                if (result && quit) return;
-            }
-
-            return;
-        }
-
-        for (var i = 0; i < retryTimes; i++)
-        {
-            result = Connect(ipEndPoint, timeout, ct);
-            if ((result && quit) || ct.IsCancellationRequested) return;
-        }
-    }
-
-    private static bool Connect(IPEndPoint ipEndPoint, int timeout, CancellationToken token)
+    private static async Task<bool> Connect(IPEndPoint ipEndPoint, int timeout, CancellationToken token)
     {
         using var tcp = new TcpClient();
         var stopwatch = new Stopwatch();
         stopwatch.Start();
 
-        try
+        // tcp.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port).Wait(timeout * 1000, token);
+        var task = tcp.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, token).AsTask();
+        var winner = await WhenAny(
+            task, Delay(TimeSpan.FromSeconds(1), token));
+        stopwatch.Stop();
+        
+        if (winner == task)
         {
-            // ReSharper disable once MethodSupportsCancellation
-            tcp.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port).Wait(timeout * 1000, token);
-            stopwatch.Stop();
-
-            AnsiConsole.MarkupLine(
-                tcp.Connected
-                    ? $"request [green]successes[/]. waited {stopwatch.ElapsedMilliseconds.NetworkDelayWithColor()} ms"
-                    : $"request [red]failed[/]. waited {stopwatch.ElapsedMilliseconds.NetworkDelayWithColor()} ms");
+            AnsiConsole.MarkupLine($"request [green]successes[/]. waited {stopwatch.ElapsedMilliseconds.NetworkDelayWithColor()} ms");
+            return tcp.Connected;
         }
-        catch (OperationCanceledException)
+        else
         {
-            MyAnsiConsole.MarkupErrorLine("operation canceled");
+            AnsiConsole.MarkupLine($"request [red]failed[/]. waited {stopwatch.ElapsedMilliseconds.NetworkDelayWithColor()} ms");
+            return false;
         }
-        catch (Exception e)
-        {
-            MyAnsiConsole.MarkupErrorLine($"connect failed:{e.Message}");
-        }
-
-        return tcp.Connected;
     }
 }
