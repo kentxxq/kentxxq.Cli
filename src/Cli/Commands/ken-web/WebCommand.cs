@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.CommandLine;
 using System.IO;
 using Cli.Utils;
 using Microsoft.AspNetCore.Builder;
@@ -28,7 +29,17 @@ public static class WebCommand
             Webroot,
             Port
         };
-        command.SetHandler(Run, Webroot, Port);
+        command.SetHandler(context =>
+        {
+            var webroot = context.ParseResult.GetValueForOption(Webroot);
+            var port = context.ParseResult.GetValueForOption(Port);
+            
+            if (webroot.IsNullOrEmpty())
+                webroot = Directory.GetCurrentDirectory();
+            else if (!Path.IsPathRooted(webroot)) webroot = Path.Combine(Directory.GetCurrentDirectory(), webroot!);
+            
+            Run(webroot,port);
+        });
         return command;
     }
 
@@ -36,11 +47,8 @@ public static class WebCommand
     {
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddDirectoryBrowser();
+        // 过滤掉内置的日志
         builder.Logging.AddFilter((provider, category, logLevel) => !category.StartsWith("Microsoft"));
-
-        if (webroot.IsNullOrEmpty())
-            webroot = builder.Environment.WebRootPath;
-        else if (!Path.IsPathRooted(webroot)) webroot = Path.Combine(Directory.GetCurrentDirectory(), webroot);
 
         var app = builder.Build();
         var fileProvider = new PhysicalFileProvider(webroot);
