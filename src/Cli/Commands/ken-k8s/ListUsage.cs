@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using k8s;
+using k8s.Models;
 using Masuit.Tools;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
@@ -32,13 +33,16 @@ public static class ListUsage
     private static async Task PrintDeployUsageTable(Kubernetes client, string? clusterNamespace)
     {
         var table = new Table();
+        // 表头
         table.AddColumn("Namespace");
         table.AddColumn("Deployment");
         table.AddColumn("Memory Usage");
+        table.AddColumn("Cpu Usage");
         table.AddColumn("Request Memory");
         table.AddColumn("Limit Memory");
         table.AddColumn("Request Cpu");
         table.AddColumn("Limit Cpu");
+        
         await AnsiConsole.Live(table).StartAsync(async ctx =>
         {
             ctx.Refresh();
@@ -48,15 +52,49 @@ public static class ListUsage
 
             foreach (var ns in namespaces.Items)
             {
+                // deployment信息
                 var dList = await client.ListNamespacedDeploymentAsync(ns.Metadata.Name);
+                // metrics信息
+                var mList = await client.GetKubernetesPodsMetricsByNamespaceAsync(ns.Metadata.Name);
+
                 foreach (var d in dList.Items)
                 {
+                    // 获取资源的配置信息
+                    ResourceQuantity? rm = null;
+                    ResourceQuantity? rc = null;
+                    ResourceQuantity? lm = null;
+                    ResourceQuantity? lc = null;
+                    var c = d.Spec.Template.Spec.Containers.First();
+                    c.Resources.Requests?.TryGetValue("memory", out rm);
+                    c.Resources.Limits?.TryGetValue("memory", out lm);
+                    c.Resources.Requests?.TryGetValue("cpu", out rc);
+                    c.Resources.Limits?.TryGetValue("cpu", out lc);
+
+                    // 使用率计算
+                    decimal memoryUsage = 0;
+                    decimal cpuUsage = 0;
+                    if (lm is not null)
+                    {
+                        var metrics = mList.Items.Where(p => p.Metadata.Name.StartsWith(d.Metadata.Name)).ToList();
+                        var mUsage = metrics.First().Containers.First().Usage["memory"].ToDecimal();
+                        memoryUsage = mUsage / lm.ToDecimal();
+                    }
+                    if (lc is not null)
+                    {
+                        var metrics = mList.Items.Where(p => p.Metadata.Name.StartsWith(d.Metadata.Name)).ToList();
+                        var cUsage = metrics.First().Containers.First().Usage["cpu"].ToDecimal();
+                        cpuUsage = cUsage / lc.ToDecimal();
+                    }
+                    
+                    
                     table.AddRow(d.Metadata.NamespaceProperty, d.Metadata.Name,
-                        "100%",// TODO 计算。还有资源使用率的排序。。eventcommand
-                        d.Spec.Template.Spec.Containers.First().Resources.Requests["memory"].Value,
-                        d.Spec.Template.Spec.Containers.First().Resources.Limits["memory"].Value,
-                        d.Spec.Template.Spec.Containers.First().Resources.Requests["cpu"].Value,
-                        d.Spec.Template.Spec.Containers.First().Resources.Limits["cpu"].Value);
+                        $"{memoryUsage:P2}",
+                        $"{cpuUsage:P2}",
+                        rm?.Value ?? "",
+                        lm?.Value ?? "",
+                        rc?.Value ?? "",
+                        lc?.Value ?? ""
+                    );
                     ctx.Refresh();
                 }
             }
