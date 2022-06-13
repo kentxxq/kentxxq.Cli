@@ -55,7 +55,7 @@ public static class UpdateCommand
     /// 当前程序的版本号
     /// </summary>
     private static readonly string CurrentVersion = Assembly.GetAssemblyInformationalVersion()!;
-    
+
     /// <summary>
     /// 强制升级
     /// </summary>
@@ -114,6 +114,7 @@ public static class UpdateCommand
                     context.ExitCode = 1;
                     return;
                 }
+
                 AnsiConsole.MarkupLine($"latest version:{downloadVersion}");
             }
 

@@ -1,8 +1,5 @@
-﻿using System;
-using System.CommandLine;
-using System.IO;
+﻿using System.CommandLine;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using k8s;
 using Microsoft.IdentityModel.Tokens;
@@ -17,16 +14,16 @@ public static class GetRestartPod
         var command = new Command("1", "list restarted pod");
         command.SetHandler(async context =>
         {
-            var configPath = context.ParseResult.GetValueForOption(K8SCommand.ConfigPath)?.Replace(" ","");
-            var clusterNamespace = context.ParseResult.GetValueForOption(K8SCommand.ClusterNamespace)?.Replace(" ","");
-            
+            var configPath = context.ParseResult.GetValueForOption(K8SCommand.ConfigPath)?.Replace(" ", "");
+            var clusterNamespace = context.ParseResult.GetValueForOption(K8SCommand.ClusterNamespace)?.Replace(" ", "");
+
             var config = await ConfigUtils.GetConfig(configPath);
             var client = new Kubernetes(config);
             await PrintRestartedPod(client, clusterNamespace);
         });
         return command;
     }
-    
+
     private static async Task PrintRestartedPod(Kubernetes client, string? clusterNamespace)
     {
         var table = new Table();

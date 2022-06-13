@@ -5,10 +5,7 @@ using Cli.Utils;
 
 await AllCommands.BuildCommandLine()
     .UseDefaults()
-    .UseExceptionHandler((exception, context) =>
-    {
-        MyAnsiConsole.MarkupErrorLine($"{exception.Message}");
-    },1)
+    .UseExceptionHandler((exception, context) => { MyAnsiConsole.MarkupErrorLine($"{exception.Message}"); }, 1)
     .Build()
 #if DEBUG
     // .InvokeAsync(new string[] { "ss" });
@@ -17,8 +14,8 @@ await AllCommands.BuildCommandLine()
 // .InvokeAsync(new[] { "sp", "kentxxq.com:443", "-t 2","-n 5" });
 // .InvokeAsync(new[] { "redis", "a.kentxxq.com","-p didi2" });
     .InvokeAsync(new[] { "k8s", "2" });
-    // .InvokeAsync(new[] { "web" });
-    // .InvokeAsync(new[] { "update", "-f" });
+// .InvokeAsync(new[] { "web" });
+// .InvokeAsync(new[] { "update", "-f" });
 #else
       .InvokeAsync(args);
       //.InvokeAsync(new string[] { "tr" });

@@ -14,7 +14,7 @@ namespace Cli.Commands.ken_tr;
 internal static class TracerouteCommand
 {
     private static readonly Argument<string> HostName = new("url", () => "kentxxq.com", "traceroute kentxxq.com");
-    
+
     public static Command GetCommand()
     {
         var command = new Command("tr",
@@ -22,20 +22,17 @@ internal static class TracerouteCommand
         {
             HostName
         };
-
-        // command.SetHandler(async tracerouteType => { await Run(tracerouteType); },
-        //     new TracerouteBinder(HostName));
         
         command.SetHandler(async context =>
         {
             var hostname = context.ParseResult.GetValueForArgument(HostName);
-            
+
             // 测试连接
             TryConnect(hostname);
 
             await Run(hostname);
         });
-        
+
         return command;
     }
 
@@ -48,13 +45,9 @@ internal static class TracerouteCommand
         AnsiConsole.Markup($"try connecting to {hostname} ...");
         var reply = Connection.Ping(hostname);
         if (reply.Status == IPStatus.Success)
-        {
             MyAnsiConsole.MarkupSuccessLine("success");
-        }
         else
-        {
             MyAnsiConsole.MarkupWarningLine("failed");
-        }
     }
 
     private static async Task Run(string hostname)
@@ -63,7 +56,7 @@ internal static class TracerouteCommand
         // 目标主机的实际ip
         var hostIp = (await Dns.GetHostAddressesAsync(hostname))[0].ToString();
         var reply = Connection.Ping(hostname, ttl);
-        
+
         // ttl为1的时候，可能会出现超时。会导致reply内的ip显示为目标主机ip。所以需要重新ping，拿到第二次的reply结果再进入循环
         if (reply.Status == IPStatus.TimedOut)
         {
@@ -71,7 +64,7 @@ internal static class TracerouteCommand
             ttl += 1;
             reply = Connection.Ping(hostname, ttl);
         }
-        
+
         // 准备循环遍历中间网络节点
         while (ttl < 255 && reply.Address.ToString() != hostIp)
         {
