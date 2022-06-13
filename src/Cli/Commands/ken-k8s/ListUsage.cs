@@ -12,7 +12,7 @@ public static class ListUsage
 {
     public static Command GetCommand()
     {
-        var command = new Command("2", "list restarted pod");
+        var command = new Command("2", "list deployment resource usage");
         command.SetHandler(async context =>
         {
             var configPath = context.ParseResult.GetValueForOption(K8SCommand.ConfigPath)?.Replace(" ", "");
@@ -21,6 +21,7 @@ public static class ListUsage
             var config = await ConfigUtils.GetConfig(configPath);
             var client = new Kubernetes(config);
             await PrintDeployUsageTable(client, clusterNamespace);
+            // TODO stateful、daemonSet的数据
         });
         return command;
     }
