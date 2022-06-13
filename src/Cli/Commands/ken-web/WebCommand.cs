@@ -1,5 +1,4 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.IO;
 using Cli.Utils;
 using Microsoft.AspNetCore.Builder;
@@ -33,12 +32,12 @@ public static class WebCommand
         {
             var webroot = context.ParseResult.GetValueForOption(Webroot);
             var port = context.ParseResult.GetValueForOption(Port);
-            
+
             if (webroot.IsNullOrEmpty())
                 webroot = Directory.GetCurrentDirectory();
             else if (!Path.IsPathRooted(webroot)) webroot = Path.Combine(Directory.GetCurrentDirectory(), webroot!);
-            
-            Run(webroot,port);
+
+            Run(webroot, port);
         });
         return command;
     }

@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Cli.Extensions;
-using Cli.Utils;
 using kentxxq.Extensions.String;
 using Spectre.Console;
 using static System.Threading.Tasks.Task;
@@ -40,8 +39,8 @@ public static class SocketPingCommand
     /// <summary>
     /// 存放连接结果
     /// </summary>
-    private static bool _result = false;
-    
+    private static bool _result;
+
     public static Command GetCommand()
     {
         var command = new Command("sp", "socket ping")
@@ -51,7 +50,7 @@ public static class SocketPingCommand
             Timeout,
             Quit
         };
-        
+
         command.SetHandler(async context =>
         {
             var url = context.ParseResult.GetValueForArgument(Url);
@@ -59,25 +58,21 @@ public static class SocketPingCommand
             var timeout = context.ParseResult.GetValueForOption(Timeout);
             var quit = context.ParseResult.GetValueForOption(Quit);
             var ct = context.GetCancellationToken();
-            
+
             var ipEndPoint = url.UrlToIPEndPoint();
             if (retryTimes == 0)
-            {
                 while (!ct.IsCancellationRequested)
                 {
                     _result = await Connect(ipEndPoint, timeout, ct);
                     Thread.Sleep(500);
                     if (_result && quit) return;
                 }
-            }
             else
-            {
                 for (var i = 0; i < retryTimes; i++)
                 {
                     _result = await Connect(ipEndPoint, timeout, ct);
                     if ((_result && quit) || ct.IsCancellationRequested) return;
                 }
-            }
         });
         return command;
     }
@@ -93,16 +88,16 @@ public static class SocketPingCommand
         var winner = await WhenAny(
             task, Delay(TimeSpan.FromSeconds(1), token));
         stopwatch.Stop();
-        
+
         if (winner == task)
         {
-            AnsiConsole.MarkupLine($"request [green]successes[/]. waited {stopwatch.ElapsedMilliseconds.NetworkDelayWithColor()} ms");
+            AnsiConsole.MarkupLine(
+                $"request [green]successes[/]. waited {stopwatch.ElapsedMilliseconds.NetworkDelayWithColor()} ms");
             return tcp.Connected;
         }
-        else
-        {
-            AnsiConsole.MarkupLine($"request [red]failed[/]. waited {stopwatch.ElapsedMilliseconds.NetworkDelayWithColor()} ms");
-            return false;
-        }
+
+        AnsiConsole.MarkupLine(
+            $"request [red]failed[/]. waited {stopwatch.ElapsedMilliseconds.NetworkDelayWithColor()} ms");
+        return false;
     }
 }

@@ -1,13 +1,8 @@
-﻿using System;
-using System.CommandLine;
-using System.Globalization;
-using System.IO;
+﻿using System.CommandLine;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using k8s;
 using k8s.Models;
-using Masuit.Tools;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 
@@ -42,7 +37,7 @@ public static class ListUsage
         table.AddColumn("Limit Memory");
         table.AddColumn("Request Cpu");
         table.AddColumn("Limit Cpu");
-        
+
         await AnsiConsole.Live(table).StartAsync(async ctx =>
         {
             ctx.Refresh();
@@ -79,14 +74,15 @@ public static class ListUsage
                         var mUsage = metrics.First().Containers.First().Usage["memory"].ToDecimal();
                         memoryUsage = mUsage / lm.ToDecimal();
                     }
+
                     if (lc is not null)
                     {
                         var metrics = mList.Items.Where(p => p.Metadata.Name.StartsWith(d.Metadata.Name)).ToList();
                         var cUsage = metrics.First().Containers.First().Usage["cpu"].ToDecimal();
                         cpuUsage = cUsage / lc.ToDecimal();
                     }
-                    
-                    
+
+
                     table.AddRow(d.Metadata.NamespaceProperty, d.Metadata.Name,
                         $"{memoryUsage:P2}",
                         $"{cpuUsage:P2}",
@@ -99,6 +95,5 @@ public static class ListUsage
                 }
             }
         });
-        
     }
 }

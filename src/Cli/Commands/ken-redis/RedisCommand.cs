@@ -45,7 +45,7 @@ public static class RedisCommand
             var url = context.ParseResult.GetValueForArgument(Url);
             var port = context.ParseResult.GetValueForOption(Port);
             var db = context.ParseResult.GetValueForOption(Db);
-            var password = context.ParseResult.GetValueForOption(Password)!.Replace(" ","");
+            var password = context.ParseResult.GetValueForOption(Password)!.Replace(" ", "");
             var ct = context.GetCancellationToken();
             Run(url, port, db, password, ct);
         });
@@ -57,12 +57,12 @@ public static class RedisCommand
     private static void Run(string url, int port, int db, string password, CancellationToken ct)
     {
         var redis = ConnectionMultiplexer.Connect(new ConfigurationOptions
-            {
-                EndPoints = { $"{url}:{port}" },
-                ConnectRetry = 2,
-                ConnectTimeout = 3000,
-                Password = password
-            });
+        {
+            EndPoints = { $"{url}:{port}" },
+            ConnectRetry = 2,
+            ConnectTimeout = 3000,
+            Password = password
+        });
 
         // 测试连接
         var dbc = redis.GetDatabase(db);
@@ -81,7 +81,7 @@ public static class RedisCommand
             Console.Write(">");
             var input = Console.ReadLine() ?? "";
             var inputs = input.Split(" ", 2);
-            
+
             // 如果输入的是一个非空字符串，且不是exit()，那么就是查询操作
             if (inputs.Length == 1 && input != "" && input != "exit()")
             {
@@ -105,6 +105,7 @@ public static class RedisCommand
                                 $"using [green]db{inputs[1]} [/]keys count:[green]{server.Keys(db, "*").Count()}[/]");
                             break;
                         }
+
                         PrintUsage();
                         break;
                     case "exit()":

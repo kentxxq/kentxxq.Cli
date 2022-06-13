@@ -32,7 +32,7 @@ internal static class WebSocketCommand
     {
         var ws = new ClientWebSocket();
         await ws.ConnectAsync(wsUrl, ct);
-        
+
         var buffer = new byte[1024 * 4];
         Console.CancelKeyPress += (_, _) => { Process.GetCurrentProcess().Kill(); };
         while (!ct.IsCancellationRequested)
