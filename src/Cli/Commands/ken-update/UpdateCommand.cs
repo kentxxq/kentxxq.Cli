@@ -132,8 +132,14 @@ public static class UpdateCommand
     /// </summary>
     private static void PrintCurrentInformation()
     {
-        AnsiConsole.MarkupLine($"current file: {FilePath}");
-        AnsiConsole.MarkupLine($"current version:{CurrentVersion}");
+        var path = new TextPath("FilePath")
+            .RootStyle(new Style(foreground: Color.Red))
+            .SeparatorStyle(new Style(foreground: Color.Green))
+            .StemStyle(new Style(foreground: Color.Blue))
+            .LeafStyle(new Style(foreground: Color.Yellow));
+        AnsiConsole.Write("current file: ");
+        AnsiConsole.Write(path);
+        AnsiConsole.MarkupLine($"current version: {CurrentVersion}");
     }
 
     /// <summary>
