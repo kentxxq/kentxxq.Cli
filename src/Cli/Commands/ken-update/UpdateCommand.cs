@@ -137,7 +137,7 @@ public static class UpdateCommand
             .SeparatorStyle(new Style(foreground: Color.Green))
             .StemStyle(new Style(foreground: Color.Blue))
             .LeafStyle(new Style(foreground: Color.Yellow));
-        AnsiConsole.Write("current file: ");
+        Console.Write("current file: ");
         AnsiConsole.Write(path);
         AnsiConsole.MarkupLine($"current version: {CurrentVersion}");
     }
