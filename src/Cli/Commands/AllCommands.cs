@@ -7,6 +7,7 @@ using Cli.Commands.ken_ss;
 using Cli.Commands.ken_tr;
 using Cli.Commands.ken_update;
 using Cli.Commands.ken_web;
+using Cli.Commands.ken_wp;
 using Cli.Commands.ken_ws;
 
 namespace Cli.Commands;
@@ -24,6 +25,7 @@ public class AllCommands
         rootCommand.AddCommand(K8SCommand.GetCommand());
         rootCommand.AddCommand(WebCommand.GetCommand());
         rootCommand.AddCommand(UpdateCommand.GetCommand());
+        rootCommand.AddCommand(WebPingCommand.GetCommand());
         return new CommandLineBuilder(rootCommand);
     }
 }
