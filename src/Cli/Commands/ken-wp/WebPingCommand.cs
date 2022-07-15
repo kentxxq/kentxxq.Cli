@@ -67,11 +67,20 @@ public class WebPingCommand
         {
             stopWatch.Start();
             var httpResponseMessage = await _client.GetAsync(url, cts.Token);
-            MyAnsiConsole.MarkupSuccessLine($"{url}: {httpResponseMessage.StatusCode} {stopWatch.ElapsedMilliseconds}ms");
+            // var data = await _client.GetStringAsync(url, cts.Token);
+            // if (!data.Contains("9999"))
+            // {
+            //     Console.WriteLine($"{DateTime.Now.ToString("hh:mm:ss")},ok,{stopWatch.ElapsedMilliseconds}ms");
+            // }
+            // else
+            // {
+            //     Console.WriteLine($"{DateTime.Now.ToString("hh:mm:ss")},error,{stopWatch.ElapsedMilliseconds}ms");
+            // }
+            MyAnsiConsole.MarkupSuccessLine($"{DateTime.Now.ToString("hh:mm:ss")},{url}: {httpResponseMessage.StatusCode} {stopWatch.ElapsedMilliseconds}ms");
         }
         catch (Exception e)
         {
-            MyAnsiConsole.MarkupErrorLine($"err: {e.Message} {stopWatch.ElapsedMilliseconds}ms");
+            MyAnsiConsole.MarkupErrorLine($"{DateTime.Now.ToString("hh:mm:ss")},err: {e.Message} {stopWatch.ElapsedMilliseconds}ms");
         }
         finally
         {
