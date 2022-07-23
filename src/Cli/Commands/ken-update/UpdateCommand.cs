@@ -132,7 +132,7 @@ public static class UpdateCommand
     /// </summary>
     private static void PrintCurrentInformation()
     {
-        var path = new TextPath("FilePath")
+        var path = new TextPath($"{FilePath}")
             .RootStyle(new Style(foreground: Color.Red))
             .SeparatorStyle(new Style(foreground: Color.Green))
             .StemStyle(new Style(foreground: Color.Blue))
