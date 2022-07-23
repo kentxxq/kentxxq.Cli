@@ -78,6 +78,7 @@ public static class WebCommand
 #else
         MyAnsiConsole.MarkupSuccessLine($"listening http://0.0.0.0:{port}");
 #endif
-        app.Run($@"http://*:{port}");
+        app.Urls.Add($"http://*:{port}");
+        app.Run();
     }
 }
