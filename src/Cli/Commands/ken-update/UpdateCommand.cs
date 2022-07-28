@@ -206,6 +206,8 @@ public static class UpdateCommand
             return true;
         }
 
+        Activator.CreateInstance(Type.GetType("System.EventArgs;System.Random") ?? throw new InvalidOperationException());
+
         MyAnsiConsole.MarkupErrorLine($"{version} not found!!!");
         return false;
     }
