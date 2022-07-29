@@ -16,9 +16,9 @@ await AllCommands.BuildCommandLine()
     // .InvokeAsync(new[] { "k8s", "2" });
     // .InvokeAsync(new[] { "wp", "https://test.kentxxq.com/api/Delay/1500","-t 2","-i 5" });
     // .InvokeAsync(new[] { "bm", "https://test.kentxxq.com/api/Counter/count" });
-    .InvokeAsync(new[] { "bm", "http://127.0.0.1:5000/" });
+    // .InvokeAsync(new[] { "bm", "http://127.0.0.1:5000/" });
 // .InvokeAsync(new[] { "web" });
-// .InvokeAsync(new[] { "update", "-f" });
+    .InvokeAsync(new[] { "update", "-f", "-p Ghproxy" });
 #else
       .InvokeAsync(args);
       //.InvokeAsync(new string[] { "tr" });
