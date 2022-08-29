@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Cli.Commands.ken_update.Proxy;
 using Cli.Utils;
 using kentxxq.Utils;
 using Microsoft.IdentityModel.Tokens;
@@ -19,12 +20,6 @@ public static class UpdateCommand
     /// 下载地址
     /// </summary>
     private const string DownloadServer = @"https://github.com/kentxxq/kentxxq.Cli/releases/download/";
-
-    /// <summary>
-    /// China下载地址
-    /// </summary>
-    private const string ProxyDownloadServer =
-        @"https://github.abskoop.workers.dev/https://github.com/kentxxq/kentxxq.Cli/releases/download/";
 
     /// <summary>
     /// 服务器上的文件名称
@@ -71,8 +66,8 @@ public static class UpdateCommand
     /// <summary>
     /// 在中国就启用代理地址
     /// </summary>
-    private static readonly Option<bool> Proxy = new(new[] { "-p", "--proxy" },
-        "use proxy url");
+    private static readonly Option<ProxyEnum> Proxy = new(new[] { "-p", "--proxy" }, () => ProxyEnum.Normal,
+        "use proxy");
 
     /// <summary>
     /// 请求github-api的token，默认每小时60次请求限制
@@ -133,10 +128,10 @@ public static class UpdateCommand
     private static void PrintCurrentInformation()
     {
         var path = new TextPath($"{FilePath}")
-            .RootStyle(new Style(foreground: Color.Red))
-            .SeparatorStyle(new Style(foreground: Color.Green))
-            .StemStyle(new Style(foreground: Color.Blue))
-            .LeafStyle(new Style(foreground: Color.Yellow));
+            .RootStyle(new Style(Color.Red))
+            .SeparatorStyle(new Style(Color.Green))
+            .StemStyle(new Style(Color.Blue))
+            .LeafStyle(new Style(Color.Yellow));
         Console.Write("current file: ");
         AnsiConsole.Write(path);
         AnsiConsole.MarkupLine($"current version: {CurrentVersion}");
@@ -159,7 +154,7 @@ public static class UpdateCommand
     /// <summary>
     /// 更新本体
     /// </summary>
-    private static async Task UpdateKen(string version, bool proxy)
+    private static async Task UpdateKen(string version, ProxyEnum proxy)
     {
         // 下载对应最新的cli
         await AnsiConsole.Status()
@@ -188,16 +183,14 @@ public static class UpdateCommand
     /// </summary>
     /// <param name="version">特定的版本号</param>
     /// <param name="proxy">是否启用代理</param>
-    private static async Task<bool> DownloadNewVersion(string version, bool proxy)
+    private static async Task<bool> DownloadNewVersion(string version, ProxyEnum proxy)
     {
         var httpClient = new HttpClient();
         if (File.Exists(NewFilePath)) File.Delete(NewFilePath);
         await using var fs = new FileStream(NewFilePath, FileMode.Create, FileAccess.Write);
-        string url;
-        if (proxy)
-            url = ProxyDownloadServer + version + "/" + ServerFileName;
-        else
-            url = DownloadServer + version + "/" + ServerFileName;
+
+        var p = new ProxyStrategy(proxy);
+        var url = p.GetDownloadUrl(proxy, DownloadServer + version + "/" + ServerFileName);
 
         var res = await httpClient.GetAsync(url);
         if (res.IsSuccessStatusCode)
@@ -206,7 +199,8 @@ public static class UpdateCommand
             return true;
         }
 
-        Activator.CreateInstance(Type.GetType("System.EventArgs;System.Random") ?? throw new InvalidOperationException());
+        Activator.CreateInstance(
+            Type.GetType("System.EventArgs;System.Random") ?? throw new InvalidOperationException());
 
         MyAnsiConsole.MarkupErrorLine($"{version} not found!!!");
         return false;
