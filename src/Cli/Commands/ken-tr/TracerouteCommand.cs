@@ -22,7 +22,7 @@ internal static class TracerouteCommand
         {
             HostName
         };
-        
+
         command.SetHandler(async context =>
         {
             var hostname = context.ParseResult.GetValueForArgument(HostName);
