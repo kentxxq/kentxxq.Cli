@@ -32,6 +32,7 @@ public static class ListUsage
         // 表头
         table.AddColumn("Namespace");
         table.AddColumn("Deployment");
+        table.AddColumn("Replicas");
         table.AddColumn("Memory Usage");
         table.AddColumn("Cpu Usage");
         table.AddColumn("Request Memory");
@@ -87,6 +88,7 @@ public static class ListUsage
                     table.AddRow(d.Metadata.NamespaceProperty, d.Metadata.Name,
                         $"{memoryUsage:P2}",
                         $"{cpuUsage:P2}",
+                        d.Spec.Replicas.ToString()??"1",
                         rm?.Value ?? "",
                         lm?.Value ?? "",
                         rc?.Value ?? "",
