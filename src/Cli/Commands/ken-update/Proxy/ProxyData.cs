@@ -4,6 +4,5 @@ public enum ProxyEnum
 {
     Normal,
     Ghproxy,
-    Fastgit,
-    Cfworker
+    Fastgit
 }
