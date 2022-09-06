@@ -1,4 +1,6 @@
 ﻿using System;
+using kentxxq.Utils;
+using Assembly = System.Reflection.Assembly;
 
 namespace Cli.Commands.ken_update.Proxy;
 
@@ -8,7 +10,7 @@ public class ProxyStrategy
 
     public ProxyStrategy(ProxyEnum proxy)
     {
-        var t = Activator.CreateInstance("ken", "Cli.Commands.ken_update.Proxy." + proxy)?.Unwrap() as IProxyStrategy;
+        var t = Activator.CreateInstance(Assembly.GetExecutingAssembly().GetName().Name??"ken", "Cli.Commands.ken_update.Proxy." + proxy)?.Unwrap() as IProxyStrategy;
         _proxyStrategy = t ?? throw new ArgumentNullException(proxy.ToString(), "proxy strategy not found");
     }
 
