@@ -88,7 +88,7 @@ public static class ListUsage
                     table.AddRow(d.Metadata.NamespaceProperty, d.Metadata.Name,
                         $"{memoryUsage:P2}",
                         $"{cpuUsage:P2}",
-                        d.Spec.Replicas.ToString()??"1",
+                        d.Spec.Replicas.ToString() ?? "1",
                         rm?.Value ?? "",
                         lm?.Value ?? "",
                         rc?.Value ?? "",
