@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Cli.Commands.ken_update.Proxy;
 using Cli.Utils;
-using kentxxq.Utils;
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
 using Spectre.Console;
@@ -49,7 +48,7 @@ public static class UpdateCommand
     /// <summary>
     /// 当前程序的版本号
     /// </summary>
-    private static readonly string CurrentVersion = Assembly.GetAssemblyInformationalVersion()!;
+    private static readonly string CurrentVersion = ThisAssembly.Info.InformationalVersion;
 
     /// <summary>
     /// 强制升级
