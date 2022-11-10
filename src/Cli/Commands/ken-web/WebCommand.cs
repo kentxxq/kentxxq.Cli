@@ -47,7 +47,17 @@ public static class WebCommand
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddDirectoryBrowser();
         // 过滤掉内置的日志
-        builder.Logging.AddFilter((provider, category, logLevel) => !category.StartsWith("Microsoft"));
+        builder.Logging.AddFilter((provider, category, logLevel) =>
+        {
+            if(category is null)
+            {
+                return false;
+            }
+            else
+            {
+                return !category.StartsWith("Microsoft");
+            }
+        });
 
         var app = builder.Build();
         var fileProvider = new PhysicalFileProvider(webroot);
