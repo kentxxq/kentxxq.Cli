@@ -2,20 +2,24 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AssemblyName>ken</AssemblyName>
+
+		<!--<PublishAot>true</PublishAot>
+		<IsTrimmable>true</IsTrimmable>-->
+		
         <!-- 压缩一下大小，感觉使用的时候，差距不明显。。 -->
         <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="kentxxq.Extensions" Version="2.0.2" />
+        <PackageReference Include="kentxxq.Extensions" Version="2.0.3" />
         <PackageReference Include="kentxxq.Utils" Version="2.0.8" />
-        <PackageReference Include="KubernetesClient" Version="9.0.28" />
-        <PackageReference Include="Masuit.Tools.Core" Version="2.5.6" />
-        <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="6.0.10" />
-        <PackageReference Include="Octokit" Version="4.0.0" />
+        <PackageReference Include="KubernetesClient" Version="9.0.38" />
+        <PackageReference Include="Masuit.Tools.Core" Version="2.5.7.5" />
+        <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="7.0.0" />
+        <PackageReference Include="Octokit" Version="4.0.1" />
         <PackageReference Include="Spectre.Console" Version="0.45.0" />
         <PackageReference Include="StackExchange.Redis" Version="2.6.70" />
         <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
@@ -33,7 +37,7 @@
     <PropertyGroup>
         <!-- https://docs.microsoft.com/zh-cn/dotnet/core/project-sdk/msbuild-props#generateassemblyinfo -->
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-        <InformationalVersion>1.6.7</InformationalVersion>
+        <InformationalVersion>1.6.8</InformationalVersion>
     </PropertyGroup>
 
 </Project>
