@@ -105,8 +105,16 @@ public static class RedisCommand
                                 $"using [green]db{inputs[1]} [/]keys count:[green]{server.Keys(db, "*").Count()}[/]");
                             break;
                         }
-
                         PrintUsage();
+                        break;
+                    case "copy":
+                        var fromdb = int.Parse(inputs[1].ToString());
+                        var p = inputs[2];
+                        var copyKeys = server.Keys(fromdb, p);
+                        foreach (var key in copyKeys)
+                        {
+                            dbc.KeyCopy(key, key, 1);
+                        }
                         break;
                     case "exit()":
                         return;
