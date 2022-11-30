@@ -80,7 +80,7 @@ public static class RedisCommand
         {
             Console.Write(">");
             var input = Console.ReadLine() ?? "";
-            var inputs = input.Split(" ", 2);
+            var inputs = input.Split(" ");
 
             // 如果输入的是一个非空字符串，且不是exit()，那么就是查询操作
             if (inputs.Length == 1 && input != "" && input != "exit()")
@@ -108,13 +108,15 @@ public static class RedisCommand
                         PrintUsage();
                         break;
                     case "copy":
-                        var fromdb = int.Parse(inputs[1].ToString());
+                        var fromdb = int.Parse(inputs[1]);
                         var p = inputs[2];
                         var copyKeys = server.Keys(fromdb, p);
                         foreach (var key in copyKeys)
                         {
-                            dbc.KeyCopy(key, key, 1);
+                            dbc = redis.GetDatabase(fromdb);
+                            dbc.KeyCopy(key, key, db);
                         }
+                        AnsiConsole.MarkupLine($"using [green]db{db} [/]keys count:[green]{server.Keys(db, "*").Count()}[/]");
                         break;
                     case "exit()":
                         return;
@@ -132,6 +134,7 @@ public static class RedisCommand
         MyAnsiConsole.MarkupWarningLine("a*: search all keys start with a in db");
         MyAnsiConsole.MarkupWarningLine("del a2*: delete all keys start with a2 in db");
         MyAnsiConsole.MarkupWarningLine("select 1: checkout db 1");
+        MyAnsiConsole.MarkupWarningLine("copy 1 *: copy all keys from db1 into current selected db");
         MyAnsiConsole.MarkupWarningLine("exit(): just exit");
     }
 }
