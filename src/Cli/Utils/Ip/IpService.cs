@@ -27,10 +27,8 @@ public static class IpService
             // 拿不到ip，默认在国内吧....
             return true;
         }
-        else
-        {
-            return await InChina(myIP);
-        }
+
+        return await InChina(myIP);
     }
     
     /// <summary>
@@ -41,9 +39,6 @@ public static class IpService
     public static async Task<bool> InChina(string ip)
     {
         var result = await GetIpInfo(ip);
-        // Console.WriteLine(ip);
-        // Console.WriteLine(result.Country);
-        // Console.WriteLine(ChinaStrings.Contains(result.Country) && result.Status == "success");
         return ChinaStrings.Contains(result.Country) && result.Status == "success";
     }
     
@@ -82,13 +77,14 @@ public static class IpService
     {
         try
         {
-            var result = await IpApiTool.GetIpInfo(ip);
+            // 使用test.kentxxq.com(实际用的ip2region-20230509)
+            var result = await Ip2RegionTool.GetIpInfo(ip);
             return result;
         }
         catch (HttpRequestException)
         {
-            // ip-api.com不通，使用test.kentxxq.com(实际用的ip2region-20230509)
-            var result = await Ip2RegionTool.GetIpInfo(ip);
+            // test.kentxxq.com不通，使用ip-api.com
+            var result = await IpApiTool.GetIpInfo(ip);
             return result;
         }
         catch (Exception)
