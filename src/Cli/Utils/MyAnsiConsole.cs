@@ -9,7 +9,7 @@ public static class MyAnsiConsole
         AnsiConsole.MarkupLine("[red]{0}[/]",Markup.Escape(text));
     }
 
-    public static void MarkupSuccessLine(string? text)
+    public static void MarkupSuccessLine(string text)
     {
         AnsiConsole.MarkupLine("[green]{0}[/]",Markup.Escape(text));
     }
