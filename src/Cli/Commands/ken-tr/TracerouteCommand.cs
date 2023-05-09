@@ -1,11 +1,10 @@
 ﻿using System;
 using System.CommandLine;
 using System.Net;
-using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using Cli.Utils;
-using kentxxq.Utils;
+using Cli.Utils.Ip;
 using Masuit.Tools;
 using Spectre.Console;
 
@@ -43,7 +42,7 @@ internal static class TracerouteCommand
     private static void TryConnect(string hostname)
     {
         AnsiConsole.Markup($"try connecting to {hostname} ...");
-        var reply = Connection.Ping(hostname);
+        var reply = StaticPing.Ping(hostname);
         if (reply.Status == IPStatus.Success)
             MyAnsiConsole.MarkupSuccessLine("success");
         else
@@ -55,14 +54,14 @@ internal static class TracerouteCommand
         var ttl = 1;
         // 目标主机的实际ip
         var hostIp = (await Dns.GetHostAddressesAsync(hostname))[0].ToString();
-        var reply = Connection.Ping(hostname, ttl);
+        var reply = StaticPing.Ping(hostname, ttl);
 
         // ttl为1的时候，可能会出现超时。会导致reply内的ip显示为目标主机ip。所以需要重新ping，拿到第二次的reply结果再进入循环
         if (reply.Status == IPStatus.TimedOut)
         {
             MyAnsiConsole.MarkupWarningLine($"{ttl} request timeout");
             ttl += 1;
-            reply = Connection.Ping(hostname, ttl);
+            reply = StaticPing.Ping(hostname, ttl);
         }
 
         // 准备循环遍历中间网络节点
@@ -72,13 +71,13 @@ internal static class TracerouteCommand
             await PrintRegionByIp(reply.Address.ToString());
 
             ttl += 1;
-            reply = Connection.Ping(hostname, ttl);
+            reply = StaticPing.Ping(hostname, ttl);
             // 如果超时，就输出timeout然后继续下个节点
             while (reply.Status == IPStatus.TimedOut)
             {
                 MyAnsiConsole.MarkupWarningLine($"{ttl} request timeout");
                 ttl += 1;
-                reply = Connection.Ping(hostname, ttl);
+                reply = StaticPing.Ping(hostname, ttl);
             }
         }
 
@@ -93,7 +92,6 @@ internal static class TracerouteCommand
     /// <param name="ip"></param>
     private static async Task PrintRegionByIp(string ip)
     {
-        var ipTool = new IP(new HttpClient());
         if (ip.IsPrivateIP())
         {
             try
@@ -107,11 +105,9 @@ internal static class TracerouteCommand
         }
         else
         {
-            var result =
-                await ipTool.GetIpInfoByIp(
-                    (await Dns.GetHostAddressesAsync(ip))[0]
-                    .ToString());
-            MyAnsiConsole.MarkupSuccessLine(result.ToString());
+            var ipAddress = (await Dns.GetHostAddressesAsync(ip))[0];
+            var result = await IpService.GetIpInfo(ipAddress.ToString());
+            MyAnsiConsole.MarkupSuccessLine($"{result.Country}-{result.RegionName}-{result.City}-{result.Isp}");
         }
     }
 }
