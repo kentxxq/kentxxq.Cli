@@ -55,7 +55,7 @@ public static class IpService
     public static async Task<string> GetMyIP()
     {
         var httpClient = new HttpClient();
-        var data = string.Empty;
+        string? data;
         try
         {
             var result = await httpClient.GetStreamAsync("https://httpbin.org/ip");
@@ -85,13 +85,13 @@ public static class IpService
             var result = await IpApiTool.GetIpInfo(ip);
             return result;
         }
-        catch (HttpRequestException e)
+        catch (HttpRequestException)
         {
             // ip-api.com不通，使用test.kentxxq.com(实际用的ip2region-20230509)
             var result = await Ip2RegionTool.GetIpInfo(ip);
             return result;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             // test.kentxxq.com 也不通，说明我已经没有在维护了。。
             return new IpServiceModel
