@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -18,6 +19,6 @@ public static class Ip2RegionTool
     {
         var httpClient = new HttpClient();
         var result = await httpClient.GetFromJsonAsync<IpServiceModel>($"https://test.kentxxq.com/ip/{ip}");
-        return result;
+        return result ?? throw new ApplicationException("无法从test.kentxxq.com/ip获取ip信息");
     }
 }

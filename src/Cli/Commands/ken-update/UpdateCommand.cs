@@ -161,7 +161,7 @@ public static class UpdateCommand
     {
         // 下载对应最新的cli
         await AnsiConsole.Status()
-            .StartAsync("Downloading...", async _ =>
+            .StartAsync($"Downloading from {proxy.ToString()}...", async _ =>
             {
                 var ok = await DownloadNewVersion(version, proxy);
                 if (ok)
