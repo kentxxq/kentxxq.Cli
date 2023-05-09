@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Cli.Commands.ken_update.Proxy;
 using Cli.Utils;
+using Cli.Utils.Ip;
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
 using Spectre.Console;
@@ -65,7 +66,7 @@ public static class UpdateCommand
     /// <summary>
     /// 在中国就启用代理地址
     /// </summary>
-    private static readonly Option<ProxyEnum> Proxy = new(new[] { "-p", "--proxy" }, () => ProxyEnum.Normal,
+    private static readonly Option<ProxyEnum> Proxy = new(new[] { "-p", "--proxy" }, () => IpService.ImInChina().Result ? ProxyEnum.Ghproxy : ProxyEnum.Github,
         "use proxy");
 
     /// <summary>
@@ -116,7 +117,10 @@ public static class UpdateCommand
             if (!force && CurrentVersion == downloadVersion)
                 MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
             else
+            {
+                MyAnsiConsole.MarkupSuccessLine($"using {proxy.ToString()}");
                 await UpdateKen(downloadVersion!, proxy);
+            }
         });
         return command;
     }

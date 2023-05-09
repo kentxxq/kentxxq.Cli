@@ -21,6 +21,6 @@ await AllCommands.BuildCommandLine()
     // .InvokeAsync(new[] { "update", "-f", "-p Ghproxy" });
 #else
       .InvokeAsync(args);
-      // .InvokeAsync(new [] { "update", "-f", "-p Ghproxy" });
+// .InvokeAsync(new[] { "update", "-f" });
 #endif
 //System.Console.WriteLine(result);
