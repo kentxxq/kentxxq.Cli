@@ -6,16 +6,16 @@ public static class MyAnsiConsole
 {
     public static void MarkupErrorLine(string text)
     {
-        AnsiConsole.MarkupLine($"[red]{text}[/]");
+        AnsiConsole.MarkupLine("[red]{0}[/]",Markup.Escape(text));
     }
 
     public static void MarkupSuccessLine(string? text)
     {
-        AnsiConsole.MarkupLine($"[green]{text}[/]");
+        AnsiConsole.MarkupLine("[green]{0}[/]",Markup.Escape(text));
     }
 
     public static void MarkupWarningLine(string text)
     {
-        AnsiConsole.MarkupLine($"[orange3]{text}[/]");
+        AnsiConsole.MarkupLine("[orange3]{0}[/]",Markup.Escape(text));
     }
 }
