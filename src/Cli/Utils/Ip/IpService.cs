@@ -54,19 +54,19 @@ public static class IpService
     /// <returns></returns>
     public static async Task<string> GetMyIP()
     {
-        var httpClient = new HttpClient();
+        var httpClient = new HttpClient{Timeout = TimeSpan.FromSeconds(3)};
         string? data;
         try
-        {
-            var result = await httpClient.GetStreamAsync("https://httpbin.org/ip");
-            var jsonDoc = await JsonDocument.ParseAsync(result);
-            data = jsonDoc.RootElement.GetProperty("origin").GetString();
-        }
-        catch (Exception)
         {
             var result = await httpClient.GetStreamAsync("https://test.kentxxq.com/ip");
             var jsonDoc = await JsonDocument.ParseAsync(result);
             data = jsonDoc.RootElement.GetProperty("ip").GetString();
+        }
+        catch (Exception)
+        {
+            var result = await httpClient.GetStreamAsync("https://httpbin.org/ip");
+            var jsonDoc = await JsonDocument.ParseAsync(result);
+            data = jsonDoc.RootElement.GetProperty("origin").GetString();
         }
         return string.IsNullOrEmpty(data) ? "0.0.0.0" : data;
     }

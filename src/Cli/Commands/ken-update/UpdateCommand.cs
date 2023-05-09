@@ -118,7 +118,6 @@ public static class UpdateCommand
                 MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
             else
             {
-                MyAnsiConsole.MarkupSuccessLine($"using {proxy.ToString()}");
                 await UpdateKen(downloadVersion!, proxy);
             }
         });

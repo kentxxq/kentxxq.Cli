@@ -17,7 +17,7 @@ public static class Ip2RegionTool
     /// <returns></returns>
     public static async Task<IpServiceModel> GetIpInfo(string ip)
     {
-        var httpClient = new HttpClient();
+        var httpClient = new HttpClient{Timeout = TimeSpan.FromSeconds(3)};
         var result = await httpClient.GetFromJsonAsync<IpServiceModel>($"https://test.kentxxq.com/ip/{ip}");
         return result ?? throw new ApplicationException("无法从test.kentxxq.com/ip获取ip信息");
     }
