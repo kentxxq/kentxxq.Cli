@@ -2,7 +2,7 @@
 
 public enum ProxyEnum
 {
-    Normal,
+    Github,
     Ghproxy,
     Fastgit
 }

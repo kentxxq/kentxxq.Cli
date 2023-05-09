@@ -1,6 +1,6 @@
 ﻿namespace Cli.Commands.ken_update.Proxy;
 
-public class Normal : IProxyStrategy
+public class Github : IProxyStrategy
 {
     public string GetProxyUrl(string releaseUrl)
     {
