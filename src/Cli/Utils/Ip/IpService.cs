@@ -94,10 +94,10 @@ public static class IpService
             {
                 Status = IpServiceQueryStatus.fail,
                 IP = ip,
-                Country = "unknown",
-                RegionName = "unknown",
-                City = "unknown",
-                Isp = "unknown",
+                Country = "unknownCountry",
+                RegionName = "unknownRegionName",
+                City = "unknownCity",
+                Isp = "unknownIsp",
             };
         }
     }
