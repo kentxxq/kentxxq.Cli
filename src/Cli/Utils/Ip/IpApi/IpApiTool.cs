@@ -23,7 +23,7 @@ public static class IpApiTool
         if (data!.Status != "success") throw new ApplicationException("查询失败");
         var result = new IpServiceModel
         {
-            Status = data.Status,
+            Status = Enum.Parse<IpServiceQueryStatus>(data.Status),
             IP = ip,
             Country = data.Country, 
             RegionName = data.RegionName, 
