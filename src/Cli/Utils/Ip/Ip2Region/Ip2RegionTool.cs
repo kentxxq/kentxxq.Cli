@@ -1,6 +1,8 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Cli.Utils.Ip.Ip2Region;
@@ -8,8 +10,13 @@ namespace Cli.Utils.Ip.Ip2Region;
 /// <summary>
 /// Ip2Region工具
 /// </summary>
-public static class Ip2RegionTool
+public class Ip2RegionTool
 {
+    private static readonly JsonSerializerOptions MyJsonSerializerOptions = new JsonSerializerOptions()
+    {
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    };
+    
     /// <summary>
     /// 获取ip信息
     /// </summary>
@@ -18,7 +25,7 @@ public static class Ip2RegionTool
     public static async Task<IpServiceModel> GetIpInfo(string ip)
     {
         var httpClient = new HttpClient{Timeout = TimeSpan.FromSeconds(3)};
-        var result = await httpClient.GetFromJsonAsync<IpServiceModel>($"https://test.kentxxq.com/ip/{ip}");
+        var result = await httpClient.GetFromJsonAsync<IpServiceModel>($"https://test.kentxxq.com/ip/{ip}",MyJsonSerializerOptions);
         return result ?? throw new ApplicationException("无法从test.kentxxq.com/ip获取ip信息");
     }
 }
