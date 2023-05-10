@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Cli.Extensions;
-using kentxxq.Extensions.String;
 using Spectre.Console;
 using static System.Threading.Tasks.Task;
 
@@ -59,7 +58,7 @@ public static class SocketPingCommand
             var quit = context.ParseResult.GetValueForOption(Quit);
             var ct = context.GetCancellationToken();
 
-            var ipEndPoint = url.UrlToIPEndPoint();
+            var ipEndPoint = new IPEndPoint((await Dns.GetHostAddressesAsync(url.Split(":")[0], ct))[0], int.Parse(url.Split(":")[1]));
             if (retryTimes == 0)
             {
                 while (!ct.IsCancellationRequested)
