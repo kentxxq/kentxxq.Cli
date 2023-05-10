@@ -9,6 +9,7 @@ using Cli.Utils;
 using Cli.Utils.Ip;
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
+using Serilog;
 using Spectre.Console;
 using FileMode = System.IO.FileMode;
 
@@ -66,7 +67,7 @@ public static class UpdateCommand
     /// <summary>
     /// 在中国就启用代理地址
     /// </summary>
-    private static readonly Option<ProxyEnum> Proxy = new(new[] { "-p", "--proxy" }, () => IpService.ImInChina().Result ? ProxyEnum.Ghproxy : ProxyEnum.Github,
+    private static readonly Option<ProxyEnum> Proxy = new(new[] { "-p", "--proxy" }, () => IpService.ImInChina().GetAwaiter().GetResult() ? ProxyEnum.Ghproxy : ProxyEnum.Github,
         "use proxy");
 
     /// <summary>

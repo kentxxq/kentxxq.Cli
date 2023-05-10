@@ -24,7 +24,7 @@ public static class IpService
         var myIP = await GetMyIP();
         if (myIP == "0.0.0.0")
         {
-            // 拿不到ip，默认在国内吧....
+            MyLog.Logger?.Debug("拿不到ip，默认在国内吧....");
             return true;
         }
 
@@ -39,6 +39,7 @@ public static class IpService
     public static async Task<bool> InChina(string ip)
     {
         var result = await GetIpInfo(ip);
+        MyLog.Logger?.Debug("在国内？{Contains}", ChinaStrings.Contains(result.Country) && result.Status == IpServiceQueryStatus.success);
         return ChinaStrings.Contains(result.Country) && result.Status == IpServiceQueryStatus.success;
     }
     
@@ -63,6 +64,7 @@ public static class IpService
             var jsonDoc = await JsonDocument.ParseAsync(result);
             data = jsonDoc.RootElement.GetProperty("origin").GetString();
         }
+        MyLog.Logger?.Debug("通过api的查询结果，我的ip是: {Data}", data);
         return string.IsNullOrEmpty(data) ? "0.0.0.0" : data;
     }
     
@@ -77,19 +79,19 @@ public static class IpService
     {
         try
         {
-            // 使用test.kentxxq.com(实际用的ip2region-20230509)
+            MyLog.Logger?.Debug("使用test.kentxxq.com(实际用的ip2region-20230509)");
             var result = await Ip2RegionTool.GetIpInfo(ip);
             return result;
         }
         catch (HttpRequestException)
         {
-            // test.kentxxq.com不通，使用ip-api.com
+            MyLog.Logger?.Debug("test.kentxxq.com不通，使用ip-api.com");
             var result = await IpApiTool.GetIpInfo(ip);
             return result;
         }
         catch (Exception)
         {
-            // test.kentxxq.com 也不通，说明我已经没有在维护了。。
+            MyLog.Logger?.Debug("两个api都查询失败...说明我已经没有在维护了...");
             return new IpServiceModel
             {
                 Status = IpServiceQueryStatus.fail,
