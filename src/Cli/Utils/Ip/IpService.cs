@@ -39,7 +39,7 @@ public static class IpService
     public static async Task<bool> InChina(string ip)
     {
         var result = await GetIpInfo(ip);
-        return ChinaStrings.Contains(result.Country) && result.Status == "success";
+        return ChinaStrings.Contains(result.Country) && result.Status == IpServiceQueryStatus.success;
     }
     
     
@@ -92,7 +92,7 @@ public static class IpService
             // test.kentxxq.com 也不通，说明我已经没有在维护了。。
             return new IpServiceModel
             {
-                Status = "failed",
+                Status = IpServiceQueryStatus.fail,
                 IP = ip,
                 Country = "unknown",
                 RegionName = "unknown",
