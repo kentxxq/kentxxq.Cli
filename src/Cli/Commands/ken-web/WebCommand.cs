@@ -34,8 +34,13 @@ public static class WebCommand
             var port = context.ParseResult.GetValueForOption(Port);
 
             if (webroot.IsNullOrEmpty())
+            {
                 webroot = Directory.GetCurrentDirectory();
-            else if (!Path.IsPathRooted(webroot)) webroot = Path.Combine(Directory.GetCurrentDirectory(), webroot!);
+            }
+            else if (!Path.IsPathRooted(webroot))
+            {
+                webroot = Path.Combine(Directory.GetCurrentDirectory(), webroot!);
+            }
 
             Run(webroot, port);
         });
@@ -49,14 +54,12 @@ public static class WebCommand
         // 过滤掉内置的日志
         builder.Logging.AddFilter((provider, category, logLevel) =>
         {
-            if(category is null)
+            if (category is null)
             {
                 return false;
             }
-            else
-            {
-                return !category.StartsWith("Microsoft");
-            }
+
+            return !category.StartsWith("Microsoft");
         });
 
         var app = builder.Build();
@@ -66,11 +69,15 @@ public static class WebCommand
         {
             await next();
             if (context.Response.StatusCode.ToString().StartsWith("2"))
+            {
                 MyAnsiConsole.MarkupSuccessLine(
                     $"{context.Request.Protocol} {context.Request.Method} {context.Request.Path} {context.Response.StatusCode} {context.Response.ContentType} {context.Response.ContentLength}");
+            }
             else
+            {
                 MyAnsiConsole.MarkupWarningLine(
                     $"{context.Request.Protocol} {context.Request.Method} {context.Request.Path} {context.Response.StatusCode} {context.Response.ContentType} {context.Response.ContentLength}");
+            }
         });
         // 静态文件
         app.UseStaticFiles(new StaticFileOptions

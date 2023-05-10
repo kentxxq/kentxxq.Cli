@@ -105,6 +105,7 @@ public static class RedisCommand
                                 $"using [green]db{inputs[1]} [/]keys count:[green]{server.Keys(db, "*").Count()}[/]");
                             break;
                         }
+
                         PrintUsage();
                         break;
                     case "copy":
@@ -116,7 +117,9 @@ public static class RedisCommand
                             dbc = redis.GetDatabase(fromdb);
                             dbc.KeyCopy(key, key, db);
                         }
-                        AnsiConsole.MarkupLine($"using [green]db{db} [/]keys count:[green]{server.Keys(db, "*").Count()}[/]");
+
+                        AnsiConsole.MarkupLine(
+                            $"using [green]db{db} [/]keys count:[green]{server.Keys(db, "*").Count()}[/]");
                         break;
                     case "exit()":
                         return;

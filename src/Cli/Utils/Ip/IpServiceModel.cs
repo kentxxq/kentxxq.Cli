@@ -12,7 +12,7 @@ public class IpServiceModel
     /// </summary>
     [JsonPropertyName("status")]
     public IpServiceQueryStatus Status { get; set; }
-    
+
     /// <summary>
     /// ip
     /// </summary>

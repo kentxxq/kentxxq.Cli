@@ -31,7 +31,9 @@ public static class GetRestartPod
         {
             var namespaces = await client.ListNamespaceAsync();
             if (!clusterNamespace.IsNullOrEmpty())
+            {
                 namespaces.Items = namespaces.Items.Where(n => n.Metadata.Name == clusterNamespace).ToList();
+            }
 
             foreach (var ns in namespaces.Items)
             {
@@ -52,7 +54,10 @@ public static class GetRestartPod
                 }
             }
 
-            if (table.Rows.Count == 0) table.AddColumn("Not Found! Your pods are healthy.");
+            if (table.Rows.Count == 0)
+            {
+                table.AddColumn("Not Found! Your pods are healthy.");
+            }
         });
     }
 }

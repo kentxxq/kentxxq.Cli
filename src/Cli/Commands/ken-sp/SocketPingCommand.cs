@@ -61,18 +61,28 @@ public static class SocketPingCommand
 
             var ipEndPoint = url.UrlToIPEndPoint();
             if (retryTimes == 0)
+            {
                 while (!ct.IsCancellationRequested)
                 {
                     _result = await Connect(ipEndPoint, timeout, ct);
                     Thread.Sleep(500);
-                    if (_result && quit) return;
+                    if (_result && quit)
+                    {
+                        return;
+                    }
                 }
+            }
             else
+            {
                 for (var i = 0; i < retryTimes; i++)
                 {
                     _result = await Connect(ipEndPoint, timeout, ct);
-                    if ((_result && quit) || ct.IsCancellationRequested) return;
+                    if ((_result && quit) || ct.IsCancellationRequested)
+                    {
+                        return;
+                    }
                 }
+            }
         });
         return command;
     }

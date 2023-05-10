@@ -45,7 +45,9 @@ public static class ListUsage
             ctx.Refresh();
             var namespaces = await client.ListNamespaceAsync();
             if (!clusterNamespace.IsNullOrEmpty())
+            {
                 namespaces.Items = namespaces.Items.Where(n => n.Metadata.Name == clusterNamespace).ToList();
+            }
 
             foreach (var ns in namespaces.Items)
             {

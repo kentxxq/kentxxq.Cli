@@ -14,7 +14,7 @@ public static class StaticPing
     /// <param name="ttl">最大跳转数</param>
     /// <param name="timeout">超时时间(毫秒)</param>
     /// <returns></returns>
-    public static bool PingIp(IPAddress ip,int ttl=255,int timeout=1000)
+    public static bool PingIp(IPAddress ip, int ttl = 255, int timeout = 1000)
     {
         var pingSender = new Ping();
         // 32字节数据
@@ -24,7 +24,7 @@ public static class StaticPing
         var reply = pingSender.Send(ip, timeout, buffer, pingOption);
         return reply.Status == IPStatus.Success;
     }
-    
+
     /// <summary>
     /// ping 特定主机或ip
     /// </summary>
@@ -32,7 +32,7 @@ public static class StaticPing
     /// <param name="ttl">最大跳转数</param>
     /// <param name="timeout">超时时间(毫秒)</param>
     /// <returns></returns>
-    public static PingReply Ping(string url, int ttl=255,int timeout=1000)
+    public static PingReply Ping(string url, int ttl = 255, int timeout = 1000)
     {
         var ping = new Ping();
         PingOptions pingOptions = new()
@@ -55,7 +55,7 @@ public static class StaticPing
     /// <param name="ttl">最大跳转数</param>
     /// <param name="timeout">超时时间(毫秒)</param>
     /// <returns></returns>
-    public static async Task<bool> PingIpAsync(IPAddress ip,int ttl=255,int timeout=1000)
+    public static async Task<bool> PingIpAsync(IPAddress ip, int ttl = 255, int timeout = 1000)
     {
         var pingSender = new Ping();
         // 32字节数据
