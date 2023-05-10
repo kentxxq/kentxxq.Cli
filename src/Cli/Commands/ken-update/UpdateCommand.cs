@@ -9,7 +9,6 @@ using Cli.Utils;
 using Cli.Utils.Ip;
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
-using Serilog;
 using Spectre.Console;
 using FileMode = System.IO.FileMode;
 
@@ -67,7 +66,8 @@ public static class UpdateCommand
     /// <summary>
     /// 在中国就启用代理地址
     /// </summary>
-    private static readonly Option<ProxyEnum> Proxy = new(new[] { "-p", "--proxy" }, () => IpService.ImInChina().GetAwaiter().GetResult() ? ProxyEnum.Ghproxy : ProxyEnum.Github,
+    private static readonly Option<ProxyEnum> Proxy = new(new[] { "-p", "--proxy" },
+        () => IpService.ImInChina().GetAwaiter().GetResult() ? ProxyEnum.Ghproxy : ProxyEnum.Github,
         "use proxy");
 
     /// <summary>
@@ -116,7 +116,9 @@ public static class UpdateCommand
 
             // 判断是否更新程序
             if (!force && CurrentVersion == downloadVersion)
+            {
                 MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
+            }
             else
             {
                 await UpdateKen(downloadVersion!, proxy);
@@ -148,7 +150,10 @@ public static class UpdateCommand
     private static async Task<string> GetLatestVersion(string token)
     {
         var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
-        if (!token.IsNullOrEmpty()) client.Credentials = new Credentials(token);
+        if (!token.IsNullOrEmpty())
+        {
+            client.Credentials = new Credentials(token);
+        }
 
         var latestRelease = await client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli");
         return latestRelease.TagName;
@@ -166,16 +171,24 @@ public static class UpdateCommand
                 var ok = await DownloadNewVersion(version, proxy);
                 if (ok)
                 {
-                    if (File.Exists(OldFilePath)) File.Delete(OldFilePath);
+                    if (File.Exists(OldFilePath))
+                    {
+                        File.Delete(OldFilePath);
+                    }
+
                     // 移动当前的版本
                     File.Move(FilePath, OldFilePath);
-                    
+
                     // 非windows系统添加权限
                     if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
                         // MyAnsiConsole.MarkupWarningLine($"you should : chmod +x {FilePath}");
-                        File.SetUnixFileMode(NewFilePath,UnixFileMode.UserExecute|UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.GroupRead|UnixFileMode.GroupExecute|UnixFileMode.OtherExecute|UnixFileMode.OtherRead);
+                    {
+                        File.SetUnixFileMode(NewFilePath,
+                            UnixFileMode.UserExecute | UnixFileMode.UserRead | UnixFileMode.UserWrite |
+                            UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute |
+                            UnixFileMode.OtherRead);
                     }
+
                     // 将新版本cli放到现有的位置
                     File.Move(NewFilePath, FilePath);
                     MyAnsiConsole.MarkupSuccessLine("update successfully");
@@ -191,7 +204,11 @@ public static class UpdateCommand
     private static async Task<bool> DownloadNewVersion(string version, ProxyEnum proxy)
     {
         var httpClient = new HttpClient();
-        if (File.Exists(NewFilePath)) File.Delete(NewFilePath);
+        if (File.Exists(NewFilePath))
+        {
+            File.Delete(NewFilePath);
+        }
+
         await using var fs = new FileStream(NewFilePath, FileMode.Create, FileAccess.Write);
 
         var p = new ProxyStrategy(proxy);
@@ -219,6 +236,7 @@ public static class UpdateCommand
     private static string GetServerFileName()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
             switch (RuntimeInformation.OSArchitecture)
             {
                 // TODO 还少了musl
@@ -234,8 +252,10 @@ public static class UpdateCommand
                 default:
                     throw new ArgumentException("unsupported os platform");
             }
+        }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
             switch (RuntimeInformation.OSArchitecture)
             {
                 case Architecture.Arm:
@@ -251,8 +271,10 @@ public static class UpdateCommand
                 default:
                     throw new ArgumentException("unsupported os platform");
             }
+        }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
             switch (RuntimeInformation.OSArchitecture)
             {
                 case Architecture.X64:
@@ -266,6 +288,7 @@ public static class UpdateCommand
                 default:
                     throw new ArgumentException("unsupported os platform");
             }
+        }
 
         throw new ArgumentException("unknown os platform");
     }

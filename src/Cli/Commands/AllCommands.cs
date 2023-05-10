@@ -20,7 +20,7 @@ public class AllCommands
     /// </summary>
     private static readonly Option<bool> Debug = new(new[] { "--debug" }, () => false,
         "enable verbose output");
-    
+
     public static CommandLineBuilder BuildCommandLine()
     {
         var rootCommand = new RootCommand();

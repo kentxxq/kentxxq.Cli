@@ -44,9 +44,13 @@ internal static class TracerouteCommand
         AnsiConsole.Markup($"try connecting to {hostname} ...");
         var reply = StaticPing.Ping(hostname);
         if (reply.Status == IPStatus.Success)
+        {
             MyAnsiConsole.MarkupSuccessLine("success");
+        }
         else
+        {
             MyAnsiConsole.MarkupWarningLine("failed");
+        }
     }
 
     private static async Task Run(string hostname)

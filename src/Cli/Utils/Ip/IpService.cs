@@ -13,8 +13,8 @@ namespace Cli.Utils.Ip;
 /// </summary>
 public static class IpService
 {
-    private static readonly List<string> ChinaStrings = new() { "中国", "CHINA","china","CN", "cn" };
-    
+    private static readonly List<string> ChinaStrings = new() { "中国", "CHINA", "china", "CN", "cn" };
+
     /// <summary>
     /// 自己的ip是否在国内
     /// </summary>
@@ -30,7 +30,7 @@ public static class IpService
 
         return await InChina(myIP);
     }
-    
+
     /// <summary>
     /// 特定ip是否在国内
     /// </summary>
@@ -39,18 +39,19 @@ public static class IpService
     public static async Task<bool> InChina(string ip)
     {
         var result = await GetIpInfo(ip);
-        MyLog.Logger?.Debug("在国内？{Contains}", ChinaStrings.Contains(result.Country) && result.Status == IpServiceQueryStatus.success);
+        MyLog.Logger?.Debug("在国内？{Contains}",
+            ChinaStrings.Contains(result.Country) && result.Status == IpServiceQueryStatus.success);
         return ChinaStrings.Contains(result.Country) && result.Status == IpServiceQueryStatus.success;
     }
-    
-    
+
+
     /// <summary>
     /// 拿到自己的ip地址。如果都报错，会变成0.0.0.0
     /// </summary>
     /// <returns></returns>
     public static async Task<string> GetMyIP()
     {
-        var httpClient = new HttpClient{Timeout = TimeSpan.FromSeconds(3)};
+        var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
         string? data;
         try
         {
@@ -64,10 +65,10 @@ public static class IpService
             var jsonDoc = await JsonDocument.ParseAsync(result);
             data = jsonDoc.RootElement.GetProperty("origin").GetString();
         }
+
         MyLog.Logger?.Debug("通过api的查询结果，我的ip是: {Data}", data);
         return string.IsNullOrEmpty(data) ? "0.0.0.0" : data;
     }
-    
 
 
     /// <summary>
@@ -99,7 +100,7 @@ public static class IpService
                 Country = "unknownCountry",
                 RegionName = "unknownRegionName",
                 City = "unknownCity",
-                Isp = "unknownIsp",
+                Isp = "unknownIsp"
             };
         }
     }
