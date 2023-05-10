@@ -168,13 +168,15 @@ public static class UpdateCommand
                     if (File.Exists(OldFilePath)) File.Delete(OldFilePath);
                     // 移动当前的版本
                     File.Move(FilePath, OldFilePath);
+                    
+                    // 非windows系统添加权限
+                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        // MyAnsiConsole.MarkupWarningLine($"you should : chmod +x {FilePath}");
+                        File.SetUnixFileMode(NewFilePath,UnixFileMode.UserExecute|UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.GroupRead|UnixFileMode.GroupExecute|UnixFileMode.OtherExecute|UnixFileMode.OtherRead);
+                    }
                     // 将新版本cli放到现有的位置
                     File.Move(NewFilePath, FilePath);
-
-                    // 非windows系统提示执行+x
-                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                        MyAnsiConsole.MarkupWarningLine($"you should : chmod +x {FilePath}");
-
                     MyAnsiConsole.MarkupSuccessLine("update successfully");
                 }
             });

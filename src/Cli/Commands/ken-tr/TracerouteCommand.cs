@@ -105,9 +105,17 @@ internal static class TracerouteCommand
         }
         else
         {
-            var ipAddress = (await Dns.GetHostAddressesAsync(ip))[0];
-            var result = await IpService.GetIpInfo(ipAddress.ToString());
-            MyAnsiConsole.MarkupSuccessLine($"{result.Country}-{result.RegionName}-{result.City}-{result.Isp}");
+            try
+            {
+                // 这里GetHostAddressesAsync可能会有报错
+                var ipAddress = (await Dns.GetHostAddressesAsync(ip))[0];
+                var result = await IpService.GetIpInfo(ipAddress.ToString());
+                MyAnsiConsole.MarkupSuccessLine($"{result.Country}-{result.RegionName}-{result.City}-{result.Isp}");
+            }
+            catch (Exception)
+            {
+                AnsiConsole.MarkupLine("[orange3]unknown host[/]");
+            }
         }
     }
 }
