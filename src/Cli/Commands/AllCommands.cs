@@ -15,9 +15,16 @@ namespace Cli.Commands;
 
 public class AllCommands
 {
+    /// <summary>
+    /// 连接成功后是否退出
+    /// </summary>
+    private static readonly Option<bool> Debug = new(new[] { "--debug" }, () => false,
+        "enable verbose output");
+    
     public static CommandLineBuilder BuildCommandLine()
     {
         var rootCommand = new RootCommand();
+        rootCommand.AddGlobalOption(Debug);
         rootCommand.AddCommand(SocketPingCommand.GetCommand());
         rootCommand.AddCommand(WebSocketCommand.GetCommand());
         rootCommand.AddCommand(SocketStatisticsCommand.GetCommand());
