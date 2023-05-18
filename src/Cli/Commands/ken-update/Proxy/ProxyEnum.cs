@@ -1,4 +1,4 @@
-﻿namespace Cli.Commands.ken_update;
+﻿namespace Cli.Commands.ken_update.Proxy;
 
 public enum ProxyEnum
 {
