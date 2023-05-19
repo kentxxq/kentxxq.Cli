@@ -2,6 +2,7 @@
 using System.CommandLine.Builder;
 using Cli.Commands.ken_bm;
 using Cli.Commands.ken_k8s;
+using Cli.Commands.ken_mirror;
 using Cli.Commands.ken_redis;
 using Cli.Commands.ken_sp;
 using Cli.Commands.ken_ss;
@@ -35,6 +36,7 @@ public class AllCommands
         rootCommand.AddCommand(UpdateCommand.GetCommand());
         rootCommand.AddCommand(WebPingCommand.GetCommand());
         rootCommand.AddCommand(BenchMarkCommand.GetCommand());
+        rootCommand.AddCommand(MirrorCommand.GetCommand());
         return new CommandLineBuilder(rootCommand);
     }
 }

@@ -10,6 +10,12 @@ public class MyLog
 
     private static readonly Lazy<ILogger?> Lazy = new(() =>
     {
+#if DEBUG
+        return new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console(outputTemplate: LogTemplate)
+            .CreateLogger();
+#else 
         if (Environment.GetCommandLineArgs().Contains("--debug"))
         {
             return new LoggerConfiguration()
@@ -17,8 +23,8 @@ public class MyLog
                 .WriteTo.Console(outputTemplate: LogTemplate)
                 .CreateLogger();
         }
-
         return null;
+#endif
     });
 
     public static ILogger? Logger => Lazy.Value;
