@@ -24,7 +24,8 @@ await AllCommands.BuildCommandLine()
     // .InvokeAsync(new[] { "mirror", "nodejs" });
     // .InvokeAsync(new[] { "mirror", "dockerhub" });
     // .InvokeAsync(new[] { "mirror", "golang" });
-    .InvokeAsync(new[] { "mirror", "nuget" });
+    // .InvokeAsync(new[] { "mirror", "nuget" });
+    .InvokeAsync(new[] { "mirror", "python" });
 #else
       .InvokeAsync(args);
 // .InvokeAsync(new[] { "update", "-f" });
