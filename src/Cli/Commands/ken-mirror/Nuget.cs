@@ -50,7 +50,7 @@ public static class Nuget
         }
         else
         {
-            MyAnsiConsole.MarkupWarningLine("没有找到npm命令");
+            MyAnsiConsole.MarkupWarningLine("没有找到dotnet命令");
         }
     }
 }

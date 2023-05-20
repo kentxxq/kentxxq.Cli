@@ -5,6 +5,4 @@ public enum TargetEnum
     Linux,
     Maven,
     Python,
-    Csharp,
-    Java
 }
