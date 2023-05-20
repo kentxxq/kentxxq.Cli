@@ -15,7 +15,7 @@ public class Finder
         string? npmPath = null;
         
         var path = Environment.GetEnvironmentVariable("PATH");
-        MyLog.Logger?.Debug($"PATH环境变量:{path}");
+        MyLog.Logger?.Debug("PATH环境变量:{Path}", path);
         var paths = path!.Split(Path.PathSeparator);
         
         foreach (var p in paths)
@@ -25,7 +25,7 @@ public class Finder
             if (File.Exists(filePath))
             {
                 npmPath = filePath;
-                MyLog.Logger?.Debug($"找到npm变量:{npmPath}");
+                MyLog.Logger?.Debug("找到npm变量:{NpmPath}", npmPath);
                 break;
             }
         }

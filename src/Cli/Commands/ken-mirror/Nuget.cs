@@ -8,40 +8,45 @@ namespace Cli.Commands.ken_mirror;
 
 public static class Nuget
 {
-    private static readonly Option<NodeJSMirrorEnum> NpmMirror = new(
+    private static readonly Option<NugetMirrorEnum> NugetMirror = new(
         new[] { "-m", "--mirror" },
-        ()=>NodeJSMirrorEnum.NpmMirror,
-        "default registry: https://registry.npmmirror.com"
+        ()=>NugetMirrorEnum.Huawei,
+        "default huawei registry: https://mirrors.cloud.tencent.com/nuget/"
     );
 
-    private static string _commandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "npm.cmd" : "npm";
+    private static readonly string CommandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "dotnet.exe" : "dotnet";
     
     public static Command GetCommand()
     {
-        var command = new Command("nodejs", "set nodejs registry")
+        var command = new Command("nuget", "set nuget mirror")
         {
-            NpmMirror
+            NugetMirror
         };
         command.SetHandler(context =>
         {
-            var npmMirror = context.ParseResult.GetValueForOption(NpmMirror);
-            MyAnsiConsole.MarkupSuccessLine($"使用的npm镜像为 :{npmMirror}");
-            SetNpmMirror(npmMirror);
+            var nugetMirror = context.ParseResult.GetValueForOption(NugetMirror);
+            MyAnsiConsole.MarkupSuccessLine($"使用的nuget源为 :{nugetMirror}");
+            SetNpmMirror(nugetMirror);
             return Task.CompletedTask;
         });
         return command;
     }
 
-    private static void SetNpmMirror(NodeJSMirrorEnum nodeJsMirrorEnum)
+    private static void SetNpmMirror(NugetMirrorEnum nugetMirrorEnum)
     {
-        MyLog.Logger?.Debug($"npm名称:{_commandName}");
+        MyLog.Logger?.Debug("nuget名称:{CommandName}", CommandName);
         
-        var npmPath = Finder.FindCommand(_commandName);
-        if (!string.IsNullOrEmpty(npmPath))
+        var nugetPath = Finder.FindCommand(CommandName);
+        if (!string.IsNullOrEmpty(nugetPath))
         {
-            var url = nodeJsMirrorEnum.ToStringFast();
-            SubProcess.Run(npmPath,$"config set registry {url}");
-            // TODO 类似于Node-Sass和disturl 之类的资源
+            var url = nugetMirrorEnum.ToStringFast();
+            SubProcess.Run(nugetPath,$"nuget add source --name {nugetMirrorEnum} {url}");
+            
+            SubProcess.Run(nugetPath,$"nuget update source --name {nugetMirrorEnum} {url}");
+            
+            SubProcess.Run(nugetPath,"nuget list source");
+            
+            MyAnsiConsole.MarkupSuccessLine("你应该通过 dotnet nuget enable/disable source source_name 来指定使用的源");
         }
         else
         {

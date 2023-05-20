@@ -21,6 +21,7 @@ public class MirrorCommand
         command.AddCommand(NodeJS.GetCommand());
         command.AddCommand(Golang.GetCommand());
         command.AddCommand(DockerHub.GetCommand());
+        command.AddCommand(Nuget.GetCommand());
         return command;
     }
 }

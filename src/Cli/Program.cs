@@ -23,7 +23,8 @@ await AllCommands.BuildCommandLine()
     // mirror
     // .InvokeAsync(new[] { "mirror", "nodejs" });
     // .InvokeAsync(new[] { "mirror", "dockerhub" });
-    .InvokeAsync(new[] { "mirror", "golang" });
+    // .InvokeAsync(new[] { "mirror", "golang" });
+    .InvokeAsync(new[] { "mirror", "nuget" });
 #else
       .InvokeAsync(args);
 // .InvokeAsync(new[] { "update", "-f" });
