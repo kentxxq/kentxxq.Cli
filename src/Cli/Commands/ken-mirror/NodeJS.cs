@@ -14,7 +14,7 @@ public static class NodeJS
         "default registry: https://registry.npmmirror.com"
     );
 
-    private static string _commandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "npm.cmd" : "npm";
+    private static readonly string CommandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "npm.cmd" : "npm";
     
     public static Command GetCommand()
     {
@@ -34,9 +34,9 @@ public static class NodeJS
 
     private static void SetNpmMirror(NodeJSMirrorEnum nodeJsMirrorEnum)
     {
-        MyLog.Logger?.Debug($"npm名称:{_commandName}");
+        MyLog.Logger?.Debug("npm名称:{CommandName}", CommandName);
         
-        var npmPath = Finder.FindCommand(_commandName);
+        var npmPath = Finder.FindCommand(CommandName);
         if (!string.IsNullOrEmpty(npmPath))
         {
             var url = nodeJsMirrorEnum.ToStringFast();

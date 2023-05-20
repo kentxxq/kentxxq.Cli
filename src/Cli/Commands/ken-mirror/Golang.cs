@@ -14,7 +14,7 @@ public class Golang
         "default registry: https://mirrors.aliyun.com/goproxy/"
     );
 
-    private static string _commandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
+    private static readonly string CommandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
     
     public static Command GetCommand()
     {
@@ -34,9 +34,9 @@ public class Golang
 
     private static void SetNpmMirror(GolangMirrorEnum golangMirrorEnum)
     {
-        MyLog.Logger?.Debug($"golang名称:{_commandName}");
+        MyLog.Logger?.Debug("golang名称:{CommandName}", CommandName);
         
-        var goPath = Finder.FindCommand(_commandName);
+        var goPath = Finder.FindCommand(CommandName);
         if (!string.IsNullOrEmpty(goPath))
         {
             var url = golangMirrorEnum.ToStringFast();

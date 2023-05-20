@@ -17,7 +17,7 @@ public class SubProcess
         {
             MyAnsiConsole.MarkupErrorLine("执行失败");
         }
-        MyLog.Logger?.Debug($"退出状态码:{process.ExitCode}");
-        MyLog.Logger?.Debug($"退出时间:{process.ExitTime}");
+        MyLog.Logger?.Debug("退出状态码:{ProcessExitCode}", process.ExitCode);
+        MyLog.Logger?.Debug("退出时间:{ProcessExitTime}", process.ExitTime);
     }
 }
