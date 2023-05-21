@@ -14,7 +14,7 @@ public static class DockerHub
     private static readonly Option<DockerHubMirrorEnum> DockerHubMirror = new(
         new[] { "-m", "--mirror" },
         ()=>DockerHubMirrorEnum.Aliyun,
-        "default registry: https://1ocw3lst.mirror.aliyuncs.com"
+        $"default {DockerHubMirrorEnum.Aliyun} registry: https://1ocw3lst.mirror.aliyuncs.com"
     );
 
     private static readonly string ConfigPath =
@@ -32,12 +32,12 @@ public static class DockerHub
         {
             var dockerHubMirror = context.ParseResult.GetValueForOption(DockerHubMirror);
             MyAnsiConsole.MarkupSuccessLine($"使用的dockerHub镜像为 :{dockerHubMirror}");
-            await SetNpmMirror(dockerHubMirror);
+            await SetDockerhubMirror(dockerHubMirror);
         });
         return command;
     }
 
-    private static async Task SetNpmMirror(DockerHubMirrorEnum dockerHubMirrorEnum)
+    private static async Task SetDockerhubMirror(DockerHubMirrorEnum dockerHubMirrorEnum)
     {
         var mirrorUrl = dockerHubMirrorEnum.ToStringFast();
 

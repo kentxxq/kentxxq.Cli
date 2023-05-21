@@ -3,6 +3,5 @@
 public enum TargetEnum
 {
     Linux,
-    Maven,
-    Python,
+    Maven
 }

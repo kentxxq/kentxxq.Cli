@@ -23,6 +23,7 @@ public class MirrorCommand
         command.AddCommand(DockerHub.GetCommand());
         command.AddCommand(Nuget.GetCommand());
         command.AddCommand(Python.GetCommand());
+        command.AddCommand(Java.GetCommand());
         return command;
     }
 }

@@ -11,7 +11,7 @@ public static class NodeJS
     private static readonly Option<NodeJSMirrorEnum> NpmMirror = new(
         new[] { "-m", "--mirror" },
         ()=>NodeJSMirrorEnum.NpmMirror,
-        "default registry: https://registry.npmmirror.com"
+        $"default {NodeJSMirrorEnum.NpmMirror} registry: https://registry.npmmirror.com"
     );
 
     private static readonly string CommandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "npm.cmd" : "npm";
