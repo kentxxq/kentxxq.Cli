@@ -11,7 +11,7 @@ public class Golang
     private static readonly Option<GolangMirrorEnum> GoLangMirror = new(
         new[] { "-m", "--mirror" },
         ()=>GolangMirrorEnum.Aliyun,
-        "default registry: https://mirrors.aliyun.com/goproxy/"
+        $"default {GolangMirrorEnum.Aliyun} registry: https://mirrors.aliyun.com/goproxy/"
     );
 
     private static readonly string CommandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
@@ -26,13 +26,13 @@ public class Golang
         {
             var golangMirror = context.ParseResult.GetValueForOption(GoLangMirror);
             MyAnsiConsole.MarkupSuccessLine($"使用的golang代理为 :{golangMirror}");
-            SetNpmMirror(golangMirror);
+            SetGolangMirror(golangMirror);
             return Task.CompletedTask;
         });
         return command;
     }
 
-    private static void SetNpmMirror(GolangMirrorEnum golangMirrorEnum)
+    private static void SetGolangMirror(GolangMirrorEnum golangMirrorEnum)
     {
         MyLog.Logger?.Debug("golang名称:{CommandName}", CommandName);
         

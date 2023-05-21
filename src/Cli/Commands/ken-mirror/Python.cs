@@ -12,7 +12,7 @@ public static class Python
     private static readonly Option<PythonMirrorEnum> PythonMirror = new(
         new[] { "-m", "--mirror" },
         ()=>PythonMirrorEnum.Aliyun,
-        "default aliyun registry: https://mirrors.aliyun.com/pypi/simple/"
+        $"default {PythonMirrorEnum.Aliyun} registry: https://mirrors.aliyun.com/pypi/simple/"
     );
 
     private static readonly string CommandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "pip.exe" : "pip";
@@ -27,13 +27,13 @@ public static class Python
         {
             var pythonMirror = context.ParseResult.GetValueForOption(PythonMirror);
             MyAnsiConsole.MarkupSuccessLine($"使用的nuget源为 :{pythonMirror}");
-            SetNpmMirror(pythonMirror);
+            SetPythonMirror(pythonMirror);
             return Task.CompletedTask;
         });
         return command;
     }
 
-    private static void SetNpmMirror(PythonMirrorEnum pythonMirrorEnum)
+    private static void SetPythonMirror(PythonMirrorEnum pythonMirrorEnum)
     {
         MyLog.Logger?.Debug("nuget名称:{CommandName}", CommandName);
         

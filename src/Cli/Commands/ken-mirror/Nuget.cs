@@ -11,7 +11,7 @@ public static class Nuget
     private static readonly Option<NugetMirrorEnum> NugetMirror = new(
         new[] { "-m", "--mirror" },
         ()=>NugetMirrorEnum.Huawei,
-        "default huawei registry: https://mirrors.cloud.tencent.com/nuget/"
+        $"default {NugetMirrorEnum.Huawei} registry: https://mirrors.cloud.tencent.com/nuget/"
     );
 
     private static readonly string CommandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "dotnet.exe" : "dotnet";
@@ -26,13 +26,13 @@ public static class Nuget
         {
             var nugetMirror = context.ParseResult.GetValueForOption(NugetMirror);
             MyAnsiConsole.MarkupSuccessLine($"使用的nuget源为 :{nugetMirror}");
-            SetNpmMirror(nugetMirror);
+            SetNugetMirror(nugetMirror);
             return Task.CompletedTask;
         });
         return command;
     }
 
-    private static void SetNpmMirror(NugetMirrorEnum nugetMirrorEnum)
+    private static void SetNugetMirror(NugetMirrorEnum nugetMirrorEnum)
     {
         MyLog.Logger?.Debug("nuget名称:{CommandName}", CommandName);
         
