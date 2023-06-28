@@ -93,7 +93,7 @@ public static class WebCommand
 #if DEBUG
         MyAnsiConsole.MarkupSuccessLine($"listening http://localhost:{port}");
 #else
-        MyAnsiConsole.MarkupSuccessLine($"listening http://0.0.0.0:{port}");
+        MyAnsiConsole.MarkupSuccessLine($"listening http://0.0.0.0:{port},http://127.0.0.1:{port}");
 #endif
         app.Urls.Add($"http://*:{port}");
         app.Run();
