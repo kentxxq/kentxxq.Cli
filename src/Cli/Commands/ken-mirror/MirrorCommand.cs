@@ -10,7 +10,7 @@ using Masuit.Tools;
 namespace Cli.Commands.ken_mirror;
 
 /// <summary>
-/// TODO 性能和hey还是有差距。。。
+/// 镜像相关的子命令
 /// </summary>
 public class MirrorCommand
 {
