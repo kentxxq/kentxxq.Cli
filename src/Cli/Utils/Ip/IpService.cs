@@ -80,7 +80,7 @@ public static class IpService
     {
         try
         {
-            MyLog.Logger?.Debug("使用test.kentxxq.com(实际用的ip2region-20230509)");
+            MyLog.Logger?.Debug("使用ip2region-20230509获取ip信息");
             var result = await Ip2RegionTool.GetIpInfo(ip);
             return result;
         }
