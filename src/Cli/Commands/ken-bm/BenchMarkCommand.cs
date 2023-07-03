@@ -17,7 +17,7 @@ public class BenchMarkCommand
     /// <summary>
     /// http地址
     /// </summary>
-    private static readonly Argument<string> Url = new("url", "url: https://test.kentxxq.com/api/Counter/Count");
+    private static readonly Argument<string> Url = new("url", "url: https://test.kentxxq.com/Counter/Count");
 
     private static readonly Option<int> Duration = new(new[] { "-d", "--duration" }, () => 10,
         "duration: benchmark duration");
