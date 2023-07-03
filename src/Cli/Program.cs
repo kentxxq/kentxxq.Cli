@@ -18,6 +18,7 @@ await AllCommands.BuildCommandLine()
 // .InvokeAsync(new[] { "bm", "https://test.kentxxq.com/api/Counter/count" });
 // .InvokeAsync(new[] { "bm", "http://127.0.0.1:5000/" });
 // .InvokeAsync(new[] { "web" });
+.InvokeAsync(new[] { "wp", "https://test.kentxxq.com/","-d" });
 // .InvokeAsync(new[] { "update", "-f", "-p Ghproxy", "--debug" });
 
     // mirror
@@ -26,7 +27,7 @@ await AllCommands.BuildCommandLine()
     // .InvokeAsync(new[] { "mirror", "golang" });
     // .InvokeAsync(new[] { "mirror", "nuget" });
     // .InvokeAsync(new[] { "mirror", "python" });
-    .InvokeAsync(new[] { "mirror", "java" });
+    // .InvokeAsync(new[] { "mirror", "java" });
 #else
       .InvokeAsync(args);
 // .InvokeAsync(new[] { "update", "-f" });

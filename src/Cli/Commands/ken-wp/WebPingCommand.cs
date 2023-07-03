@@ -21,6 +21,9 @@ public class WebPingCommand
 
     private static readonly Option<int> Timeout = new(new[] { "-t", "--timeout" }, () => 2, "default:2 seconds");
 
+    private static readonly Option<bool> DisableKeepAlive =
+        new(new[] { "-d", "--disableKeepAlive" }, () => false, "default: true");
+
     private static readonly HttpClient _client = new();
 
     // private static readonly Stopwatch _stopwatch = new();
@@ -32,13 +35,19 @@ public class WebPingCommand
         {
             Url,
             Interval,
-            Timeout
+            Timeout,
+            DisableKeepAlive
         };
         command.SetHandler(context =>
         {
             var url = context.ParseResult.GetValueForArgument(Url);
             var interval = context.ParseResult.GetValueForOption(Interval);
             var timeout = context.ParseResult.GetValueForOption(Timeout);
+            var disableKeepAlive = context.ParseResult.GetValueForOption(DisableKeepAlive);
+            if (disableKeepAlive)
+            {
+                _client.DefaultRequestHeaders.ConnectionClose = true;
+            }
             Run(url, interval, timeout);
             Console.ReadKey();
         });
