@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CommandLine;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +25,9 @@ public class WebPingCommand
     private static readonly Option<bool> DisableKeepAlive =
         new(new[] { "-d", "--disableKeepAlive" }, () => false, "default: true");
 
+    // 因为会包含多行,单引号,双引号.所以放到文件里才能读取
+    private static readonly Option<FileInfo?> CurlFile = new(new[] { "-f","--curlFile" }, () => null, "if curlFile is not null ,Argument url will be ignore. default: ''");
+
     private static readonly HttpClient _client = new();
 
     // private static readonly Stopwatch _stopwatch = new();
@@ -36,25 +40,28 @@ public class WebPingCommand
             Url,
             Interval,
             Timeout,
-            DisableKeepAlive
+            DisableKeepAlive,
+            CurlFile
         };
-        command.SetHandler(context =>
+        command.SetHandler(async context =>
         {
             var url = context.ParseResult.GetValueForArgument(Url);
             var interval = context.ParseResult.GetValueForOption(Interval);
             var timeout = context.ParseResult.GetValueForOption(Timeout);
             var disableKeepAlive = context.ParseResult.GetValueForOption(DisableKeepAlive);
+            var curlFile = context.ParseResult.GetValueForOption(CurlFile);
+            
             if (disableKeepAlive)
             {
                 _client.DefaultRequestHeaders.ConnectionClose = true;
             }
-            Run(url, interval, timeout);
+            await Run(url, interval, timeout,curlFile);
             Console.ReadKey();
         });
         return command;
     }
 
-    private static void Run(string url, double interval, int timeout)
+    private static async Task Run(string url, double interval, int timeout,FileInfo? curlFile)
     {
         // Console.WriteLine(String.Concat(Enumerable.Repeat("=", 50)));
         // var rule = new Rule("ken-wp");
@@ -62,13 +69,36 @@ public class WebPingCommand
         // rule.RuleStyle("red dim");
         // AnsiConsole.Write(rule);
 
+        HttpRequestMessage? request;
+        var curlCommand = string.Empty;
+        if (curlFile is not null && curlFile.Exists)
+        {
+            curlCommand = await File.ReadAllTextAsync(curlFile.FullName);
+        }
+        
         var timer = new Timer(interval * 1000);
         timer.AutoReset = true;
-        timer.Elapsed += async (sender, e) => await SendRequest(url, timeout);
+        timer.Elapsed += async (sender, e) =>
+        {
+            if (!string.IsNullOrEmpty(curlCommand))
+            {
+                request = await HttpTools.CurlToHttpRequestMessage(curlCommand);
+                if (request is null)
+                {
+                    MyAnsiConsole.MarkupErrorLine("curl parse error!");
+                    return;
+                }
+            }
+            else
+            {
+                request = new HttpRequestMessage(HttpMethod.Get, url);
+            }
+            await SendRequest(request, timeout);
+        };
         timer.Enabled = true;
     }
 
-    private static async Task SendRequest(string url, int timeout)
+    private static async Task SendRequest(HttpRequestMessage httpRequestMessage, int timeout)
     {
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
@@ -76,18 +106,15 @@ public class WebPingCommand
         try
         {
             stopWatch.Start();
-            var httpResponseMessage = await _client.GetAsync(url, cts.Token);
-            // var data = await _client.GetStringAsync(url, cts.Token);
-            // if (!data.Contains("9999"))
-            // {
-            //     Console.WriteLine($"{DateTime.Now.ToString("hh:mm:ss")},ok,{stopWatch.ElapsedMilliseconds}ms");
-            // }
-            // else
-            // {
-            //     Console.WriteLine($"{DateTime.Now.ToString("hh:mm:ss")},error,{stopWatch.ElapsedMilliseconds}ms");
-            // }
+            var httpResponseMessage = await _client.SendAsync(httpRequestMessage,cts.Token);
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                MyLog.Logger?.Debug("请求成功");
+                MyLog.Logger?.Debug(await HttpTools.HttpResponseMessageToString(httpResponseMessage));
+            }
+            
             MyAnsiConsole.MarkupSuccessLine(
-                $"{DateTime.Now:hh:mm:ss},{url}: {httpResponseMessage.StatusCode} {stopWatch.ElapsedMilliseconds}ms");
+                $"{DateTime.Now:hh:mm:ss},{httpRequestMessage.RequestUri}: {httpResponseMessage.StatusCode} {stopWatch.ElapsedMilliseconds}ms");
         }
         catch (Exception e)
         {
