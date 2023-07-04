@@ -87,12 +87,12 @@ public class WebPingCommand
             //     Console.WriteLine($"{DateTime.Now.ToString("hh:mm:ss")},error,{stopWatch.ElapsedMilliseconds}ms");
             // }
             MyAnsiConsole.MarkupSuccessLine(
-                $"{DateTime.Now.ToString("hh:mm:ss")},{url}: {httpResponseMessage.StatusCode} {stopWatch.ElapsedMilliseconds}ms");
+                $"{DateTime.Now:hh:mm:ss},{url}: {httpResponseMessage.StatusCode} {stopWatch.ElapsedMilliseconds}ms");
         }
         catch (Exception e)
         {
             MyAnsiConsole.MarkupErrorLine(
-                $"{DateTime.Now.ToString("hh:mm:ss")},err: {e.Message} {stopWatch.ElapsedMilliseconds}ms");
+                $"{DateTime.Now:hh:mm:ss},err: {e.Message} {stopWatch.ElapsedMilliseconds}ms");
         }
         finally
         {
