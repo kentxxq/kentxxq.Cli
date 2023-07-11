@@ -93,12 +93,13 @@ public class WebPingCommand
             {
                 request = new HttpRequestMessage(HttpMethod.Get, url);
             }
-            await SendRequest(request, timeout);
+            // 非整数不显示毫秒
+            await SendRequest(request, timeout,interval % 1!=0);
         };
         timer.Enabled = true;
     }
 
-    private static async Task SendRequest(HttpRequestMessage httpRequestMessage, int timeout)
+    private static async Task SendRequest(HttpRequestMessage httpRequestMessage, int timeout,bool showMilliseconds)
     {
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
@@ -113,13 +114,21 @@ public class WebPingCommand
                 MyLog.Logger?.Debug(await HttpTools.HttpResponseMessageToString(httpResponseMessage));
             }
             
-            MyAnsiConsole.MarkupSuccessLine(
-                $"{DateTime.Now:hh:mm:ss},{httpRequestMessage.RequestUri}: {httpResponseMessage.StatusCode} {stopWatch.ElapsedMilliseconds}ms");
+            MyAnsiConsole.MarkupSuccess(
+                $"{(showMilliseconds?DateTime.Now.ToString("hh:mm:ss.fff"):DateTime.Now.ToString("hh:mm:ss"))},{httpRequestMessage.RequestUri}: {stopWatch.ElapsedMilliseconds}ms ");
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                MyAnsiConsole.MarkupSuccessLine($"{(int)httpResponseMessage.StatusCode}-{httpResponseMessage.StatusCode}");
+            }
+            else
+            {
+                MyAnsiConsole.MarkupWarningLine($"{(int)httpResponseMessage.StatusCode}-{httpResponseMessage.StatusCode}");
+            }
         }
         catch (Exception e)
         {
             MyAnsiConsole.MarkupErrorLine(
-                $"{DateTime.Now:hh:mm:ss},err: {e.Message} {stopWatch.ElapsedMilliseconds}ms");
+                $"{(showMilliseconds?DateTime.Now.ToString("hh:mm:ss.fff"):DateTime.Now.ToString("hh:mm:ss"))},err: {e.Message} {stopWatch.ElapsedMilliseconds}ms");
         }
         finally
         {
