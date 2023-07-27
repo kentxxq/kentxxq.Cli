@@ -46,8 +46,8 @@ public class Golang
             SubProcess.Run(goPath,$"env -w GO111MODULE=on");
             
             SubProcess.Run(goPath,$"env -w GOSUMDB={sumdb}");
-            
-            SubProcess.Run(goPath,"env");
+
+            MyAnsiConsole.MarkupSuccessLine($"验证方法: go env");
         }
         else
         {

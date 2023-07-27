@@ -78,7 +78,7 @@ public static class Java
 
         var mirrorsNode = doc.DocumentElement?["mirrors"];
 
-        // 删掉已存在的ken-mirror
+        // 删掉已存在的ken-mirror,原来的mirror不会修改
         if (mirrorsNode?.ChildNodes != null)
         {
             MyAnsiConsole.MarkupWarningLine("检测到之前配置的ken-mirror，清理中...");
@@ -91,6 +91,7 @@ public static class Java
             }
         }
 
+        // 开始创建mirror节点
         var mirrorElement = doc.CreateElement("mirror",doc.DocumentElement?.NamespaceURI);
         var idElement = doc.CreateElement("id",doc.DocumentElement?.NamespaceURI);
         idElement.InnerText = "ken-mirror";
@@ -109,6 +110,6 @@ public static class Java
         mirrorsNode?.AppendChild(mirrorElement);
         
         doc.Save(ConfigPath);
-        MyAnsiConsole.MarkupSuccessLine("成功添加ken-mirror源");
+        MyAnsiConsole.MarkupSuccessLine($"成功添加ken-mirror源,验证查看: {ConfigPath}");
     }
 }

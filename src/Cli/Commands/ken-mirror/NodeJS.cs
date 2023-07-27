@@ -41,6 +41,7 @@ public static class NodeJS
         {
             var url = nodeJsMirrorEnum.ToStringFast();
             SubProcess.Run(npmPath,$"config set registry {url}");
+            MyAnsiConsole.MarkupSuccessLine("验证方法: npm config get registry");
             // TODO 类似于Node-Sass和disturl 之类的资源
         }
         else
