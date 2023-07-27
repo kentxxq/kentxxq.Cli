@@ -38,12 +38,4 @@ public enum LinuxMirrorEnum
     #endregion
     
     
-    
-    
-    
-    
-    [Display(Name = "http://mirrors.cloud.tencent.com/nexus/repository/maven-public/")]
-    Tencent,
-    [Display(Name = "https://repo.huaweicloud.com/repository/maven/")]
-    Huawei
 }

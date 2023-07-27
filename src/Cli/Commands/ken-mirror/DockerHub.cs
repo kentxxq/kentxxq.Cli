@@ -41,16 +41,18 @@ public static class DockerHub
     {
         var mirrorUrl = dockerHubMirrorEnum.ToStringFast();
 
+        // 没有配置就创建一个
         if (!File.Exists(ConfigPath))
         {
             await Create.CreateFile(ConfigPath,"{}");
         }
 
+        // 拿到现有配置
         var configSteam = File.Open(ConfigPath,FileMode.Open,FileAccess.ReadWrite);
         using var document = await JsonDocument.ParseAsync(configSteam);
         configSteam.Close();
         
-        // MyAnsiConsole.MarkupSuccessLine("配置文件中没有registry-mirrors属性");
+        // 新对象保存数据
         using var stream = new MemoryStream();
         await using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
         writer.WriteStartObject(); // 开始写入对象
@@ -61,7 +63,8 @@ public static class DockerHub
                 property.WriteTo(writer); // 将原有的属性复制到新对象中
             }
         }
-
+        
+        // DockerHubMirrorEnum.Default是空.代表不使用镜像
         if (dockerHubMirrorEnum != DockerHubMirrorEnum.Default)
         {
             writer.WritePropertyName(MirrorFieldName);
@@ -75,7 +78,7 @@ public static class DockerHub
         var updatedJsonContent = System.Text.Encoding.UTF8.GetString(stream.ToArray());
         // 将更新后的 JSON 字符串写回到原始文件中
         await File.WriteAllTextAsync(ConfigPath, updatedJsonContent);
-        MyAnsiConsole.MarkupSuccessLine("配置成功");
+        MyAnsiConsole.MarkupSuccessLine($"配置成功,验证查看: {ConfigPath}");
         MyAnsiConsole.MarkupWarningLine("你应该重启docker生效");
         
     }

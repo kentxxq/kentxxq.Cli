@@ -44,7 +44,7 @@ public static class Nuget
             
             SubProcess.Run(nugetPath,$"nuget update source --name {nugetMirrorEnum} {url}");
             
-            SubProcess.Run(nugetPath,"nuget list source");
+            MyAnsiConsole.MarkupSuccessLine("验证方法: dotnet nuget list source");
             
             MyAnsiConsole.MarkupSuccessLine("你应该通过 dotnet nuget enable/disable source source_name 来指定使用的源");
         }

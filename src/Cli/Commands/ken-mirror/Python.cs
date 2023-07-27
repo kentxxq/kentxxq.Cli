@@ -45,6 +45,8 @@ public static class Python
             SubProcess.Run(pipPath,$"config set global.index-url \"{url}\" ");
             
             SubProcess.Run(pipPath,$"config set global.trusted-host \"{domain}\" ");
+            
+            MyAnsiConsole.MarkupSuccessLine("验证方法: pip config list");
         }
         else
         {
