@@ -13,8 +13,8 @@ public static class DockerHub
 {
     private static readonly Option<DockerHubMirrorEnum> DockerHubMirror = new(
         new[] { "-m", "--mirror" },
-        ()=>DockerHubMirrorEnum.Aliyun,
-        $"default {DockerHubMirrorEnum.Aliyun} registry: https://1ocw3lst.mirror.aliyuncs.com"
+        ()=>DockerHubMirrorEnum.NetEase163,
+        $"default {DockerHubMirrorEnum.NetEase163} registry: https://1ocw3lst.mirror.aliyuncs.com"
     );
 
     private static readonly string ConfigPath =
