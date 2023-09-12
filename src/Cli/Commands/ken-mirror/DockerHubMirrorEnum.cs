@@ -8,9 +8,9 @@ public enum DockerHubMirrorEnum
 {
     [Display(Name = "https://hub-mirror.c.163.com")]
     NetEase163,
-    [Display(Name = "https://dockerproxy.com\n")]
+    [Display(Name = "https://dockerproxy.com")]
     DockerProxy,
-    [Display(Name = "https://mirror.baidubce.com\n")]
+    [Display(Name = "https://mirror.baidubce.com")]
     Baidu,
     [Display(Name = "")]
     Default
