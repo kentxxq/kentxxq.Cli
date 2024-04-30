@@ -2,7 +2,7 @@
 
 public class Ghproxy : IProxyStrategy
 {
-    private const string ServerUrl = "https://ghproxy.com/";
+    private const string ServerUrl = "https://mirror.ghproxy.com/";
 
     public string GetProxyUrl(string releaseUrl)
     {
