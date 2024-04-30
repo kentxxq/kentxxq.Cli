@@ -93,9 +93,18 @@ public static class RedisCommand
                 switch (inputs[0])
                 {
                     case "del":
-                        var delKeys = server.Keys(db, inputs[1]);
-                        var delKeysCount = dbc.KeyDelete(delKeys.ToArray());
-                        MyAnsiConsole.MarkupErrorLine($"deleted {delKeysCount} key(s)");
+                        var deleteCount = 0;
+                        // 参考这里, GetHashSlot不需要请求服务器,所以对redis没什么影响
+                        // https://github.com/StackExchange/StackExchange.Redis/blob/main/src/StackExchange.Redis/ServerSelectionStrategy.cs
+                        // https://learn.microsoft.com/en-us/answers/questions/441214/connectionmultiplexer-hashslot-function
+                        var delKeysGroupBySlot = server.Keys(db, inputs[1]).GroupBy(k => redis.GetHashSlot(k));
+                        foreach (var slotGroup in delKeysGroupBySlot)
+                        {
+                            var slotGroupKeys = slotGroup.ToArray();
+                            dbc.KeyDelete(slotGroupKeys);
+                            deleteCount += slotGroupKeys.Length;
+                        }
+                        MyAnsiConsole.MarkupErrorLine($"deleted {deleteCount} key(s)");
                         break;
                     case "select":
                         if (int.TryParse(inputs[1], out n))
