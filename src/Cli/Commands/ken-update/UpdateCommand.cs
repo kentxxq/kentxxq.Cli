@@ -139,6 +139,7 @@ public static class UpdateCommand
             .LeafStyle(new Style(Color.Yellow));
         Console.Write("current file: ");
         AnsiConsole.Write(path);
+        Console.WriteLine();
         AnsiConsole.MarkupLine($"current version: {CurrentVersion}");
     }
 
