@@ -43,7 +43,7 @@
         <DefineConstants>$(DefineConstants);NETESCAPADES_ENUMGENERATORS_EMBED_ATTRIBUTES</DefineConstants>
         <!-- https://docs.microsoft.com/zh-cn/dotnet/core/project-sdk/msbuild-props#generateassemblyinfo -->
 <!--        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>-->
-        <Version>2.0.13</Version>
+        <Version>2.0.14</Version>
 <!--        <InformationalVersion>2.0.4</InformationalVersion>-->
     </PropertyGroup>
 
