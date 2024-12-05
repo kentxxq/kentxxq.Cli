@@ -19,11 +19,11 @@ jobs:
       - name: setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
           include-prerelease: true
 
 #      - name: build
-#        run: | 
+#        run: |
 #          dotnet publish -r linux-x64 -c Release -p:AssemblyName=ken-linux-x64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
 #          dotnet publish -r linux-musl-x64 -c Release -p:AssemblyName=ken-linux-musl-x64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
 #          dotnet publish -r linux-arm -c Release -p:AssemblyName=ken-linux-arm -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
@@ -54,14 +54,14 @@ jobs:
           prerelease: false
           title: "${{ github.ref_name }}"
           files: |
-            src/Cli/bin/Release/net8.0/win-x64/publish/ken-win-x64.exe
-            src/Cli/bin/Release/net8.0/win-x86/publish/ken-win-x86.exe
-            src/Cli/bin/Release/net8.0/win-arm64/publish/ken-win-arm64.exe
-            src/Cli/bin/Release/net8.0/linux-x64/publish/ken-linux-x64
-            src/Cli/bin/Release/net8.0/linux-arm/publish/ken-linux-arm
-            src/Cli/bin/Release/net8.0/linux-arm64/publish/ken-linux-arm64
-            src/Cli/bin/Release/net8.0/osx-x64/publish/ken-osx-x64
-            src/Cli/bin/Release/net8.0/osx-arm64/publish/ken-osx-arm64
+            src/Cli/bin/Release/net9.0/win-x64/publish/ken-win-x64.exe
+            src/Cli/bin/Release/net9.0/win-x86/publish/ken-win-x86.exe
+            src/Cli/bin/Release/net9.0/win-arm64/publish/ken-win-arm64.exe
+            src/Cli/bin/Release/net9.0/linux-x64/publish/ken-linux-x64
+            src/Cli/bin/Release/net9.0/linux-arm/publish/ken-linux-arm
+            src/Cli/bin/Release/net9.0/linux-arm64/publish/ken-linux-arm64
+            src/Cli/bin/Release/net9.0/osx-x64/publish/ken-osx-x64
+            src/Cli/bin/Release/net9.0/osx-arm64/publish/ken-osx-arm64
 
 
 #      - name: push qiniu
