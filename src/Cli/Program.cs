@@ -11,8 +11,8 @@ await AllCommands.BuildCommandLine()
     // .InvokeAsync(new string[] { "ss" });
     // .InvokeAsync(new[] { "tr", "baidu.com" });
 // .InvokeAsync(new[] { "ws", "wss://ws.kentxxq.com/ws" });
-// .InvokeAsync(new[] { "sp", "kentxxq.com:443", "-t 2","-n 5" });
-.InvokeAsync(new[] { "redis", "redis.com","-p","mima" });
+.InvokeAsync(new[] { "sp", "kentxxq.com:443", "-t 2","-n 5" });
+// .InvokeAsync(new[] { "redis", "redis.com","-p","mima" });
 // .InvokeAsync(new[] { "k8s", "2" });
 // .InvokeAsync(new[] { "wp", "https://test.kentxxq.com/api/Delay/1500","-t 2","-i 5" });
 // .InvokeAsync(new[] { "bm", "https://test.kentxxq.com/api/Counter/count","-c 5","-d 3","-fcurl.txt" });
