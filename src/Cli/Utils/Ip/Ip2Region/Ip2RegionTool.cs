@@ -26,8 +26,8 @@ public class Ip2RegionTool
     {
         var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
         var result =
-            await httpClient.GetFromJsonAsync<IpServiceModel>($"https://test.kentxxq.com/ip/{ip}",
+            await httpClient.GetFromJsonAsync<IpServiceModel>($"https://uni.kentxxq.com/ip/{ip}",
                 MyJsonSerializerOptions);
-        return result ?? throw new ApplicationException("无法从test.kentxxq.com/ip获取ip信息");
+        return result ?? throw new ApplicationException("无法从uni.kentxxq.com/ip获取ip信息");
     }
 }

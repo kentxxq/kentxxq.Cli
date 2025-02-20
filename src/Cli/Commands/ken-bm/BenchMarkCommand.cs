@@ -19,14 +19,14 @@ public class BenchMarkCommand
     /// <summary>
     /// http地址
     /// </summary>
-    private static readonly Argument<string> Url = new("url", "url: https://test.kentxxq.com/Counter/Count");
+    private static readonly Argument<string> Url = new("url", "url: https://uni.kentxxq.com/Counter/Count");
 
     private static readonly Option<int> Duration = new(new[] { "-d", "--duration" }, () => 10,
         "duration: benchmark duration");
 
     private static readonly Option<int> Concurrent = new(new[] { "-c", "--concurrent" }, () => 50,
         "concurrent: concurrent request");
-    
+
     // 因为会包含多行,单引号,双引号.所以放到文件里才能读取
     private static readonly Option<FileInfo?> CurlFile = new(new[] { "-f","--curlFile" }, () => null, "if curlFile is not null ,Argument url will be ignore. default: ''");
 
@@ -83,7 +83,7 @@ public class BenchMarkCommand
         {
             curlCommand = await File.ReadAllTextAsync(curlFile.FullName, cts);
         }
-        
+
         var client = new HttpClient
         {
             BaseAddress = new Uri(url)

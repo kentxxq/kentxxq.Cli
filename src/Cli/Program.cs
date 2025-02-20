@@ -14,11 +14,11 @@ await AllCommands.BuildCommandLine()
 .InvokeAsync(new[] { "sp", "kentxxq.com:443", "-t 2","-n 5" });
 // .InvokeAsync(new[] { "redis", "redis.com","-p","mima" });
 // .InvokeAsync(new[] { "k8s", "2" });
-// .InvokeAsync(new[] { "wp", "https://test.kentxxq.com/api/Delay/1500","-t 2","-i 5" });
-// .InvokeAsync(new[] { "bm", "https://test.kentxxq.com/api/Counter/count","-c 5","-d 3","-fcurl.txt" });
+// .InvokeAsync(new[] { "wp", "https://uni.kentxxq.com/api/Delay/1500","-t 2","-i 5" });
+// .InvokeAsync(new[] { "bm", "https://uni.kentxxq.com/api/Counter/count","-c 5","-d 3","-fcurl.txt" });
 // .InvokeAsync(new[] { "bm", "http://127.0.0.1:5000/" });
 // .InvokeAsync(new[] { "web" });
-// .InvokeAsync(new[] { "wp", "https://test.kentxxq.com/","-i 0.5","--debug","-d","-fcurl.txt"});
+// .InvokeAsync(new[] { "wp", "https://uni.kentxxq.com/","-i 0.5","--debug","-d","-fcurl.txt"});
 // .InvokeAsync(new[] { "update", "-f", "-p Ghproxy", "--debug" });
 
     // mirror

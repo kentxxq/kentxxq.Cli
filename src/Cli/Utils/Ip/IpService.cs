@@ -55,7 +55,7 @@ public static class IpService
         string? data;
         try
         {
-            var result = await httpClient.GetStreamAsync("https://test.kentxxq.com/ip");
+            var result = await httpClient.GetStreamAsync("https://uni.kentxxq.com/ip");
             var jsonDoc = await JsonDocument.ParseAsync(result);
             data = jsonDoc.RootElement.GetProperty("ip").GetString();
         }
@@ -86,7 +86,7 @@ public static class IpService
         }
         catch (HttpRequestException)
         {
-            MyLog.Logger?.Debug("test.kentxxq.com不通，使用ip-api.com");
+            MyLog.Logger?.Debug("uni.kentxxq.com不通，使用ip-api.com");
             var result = await IpApiTool.GetIpInfo(ip);
             return result;
         }
