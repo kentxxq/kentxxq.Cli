@@ -30,7 +30,7 @@ public static class GetRestartPod
         await AnsiConsole.Live(table).StartAsync(async ctx =>
         {
             var namespaces = await client.ListNamespaceAsync();
-            if (!clusterNamespace.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(clusterNamespace))
             {
                 namespaces.Items = namespaces.Items.Where(n => n.Metadata.Name == clusterNamespace).ToList();
             }

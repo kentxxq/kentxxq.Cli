@@ -98,7 +98,7 @@ public static class UpdateCommand
             // 打印当前信息
             PrintCurrentInformation();
             // 如果没有指定版本，则拿到最新版本号
-            if (specificVersion.IsNullOrEmpty())
+            if (string.IsNullOrEmpty(specificVersion))
             {
                 try
                 {
@@ -151,7 +151,7 @@ public static class UpdateCommand
     private static async Task<string> GetLatestVersion(string token)
     {
         var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
-        if (!token.IsNullOrEmpty())
+        if (!string.IsNullOrEmpty(token))
         {
             client.Credentials = new Credentials(token);
         }

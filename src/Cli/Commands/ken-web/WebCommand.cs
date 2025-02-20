@@ -33,7 +33,7 @@ public static class WebCommand
             var webroot = context.ParseResult.GetValueForOption(Webroot);
             var port = context.ParseResult.GetValueForOption(Port);
 
-            if (webroot.IsNullOrEmpty())
+            if (string.IsNullOrEmpty(webroot))
             {
                 webroot = Directory.GetCurrentDirectory();
             }

@@ -11,7 +11,7 @@ public static class ConfigUtils
 {
     public static async Task<KubernetesClientConfiguration> GetConfig(string? configPath)
     {
-        if (configPath.IsNullOrEmpty())
+        if (string.IsNullOrEmpty(configPath))
         {
             configPath = KubernetesClientConfiguration.KubeConfigDefaultLocation;
         }
