@@ -1,296 +1,122 @@
-﻿using System;
 using System.CommandLine;
-using System.IO;
-using System.Net.Http;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using Cli.Commands.ken_update.Proxy;
 using Cli.Utils;
-using Cli.Utils.Ip;
-using Microsoft.IdentityModel.Tokens;
 using Octokit;
-using Spectre.Console;
 using FileMode = System.IO.FileMode;
 
 namespace Cli.Commands.ken_update;
 
 public static class UpdateCommand
 {
-    /// <summary>
-    /// 下载地址
-    /// </summary>
-    private const string DownloadServer = @"https://github.com/kentxxq/kentxxq.Cli/releases/download/";
-
-    /// <summary>
-    /// 服务器上的文件名称
-    /// </summary>
-    private static readonly string ServerFileName = GetServerFileName();
-
-    /// <summary>
-    /// 新版本程序下载后的地址
-    /// </summary>
-    private static readonly string NewFilePath = Path.Combine(AppContext.BaseDirectory, ServerFileName + "new");
-
-    /// <summary>
-    /// 老版本程序的备份地址
-    /// </summary>
-    private static readonly string OldFilePath = Path.Combine(AppContext.BaseDirectory, ServerFileName + "old");
-
-    /// <summary>
-    /// 程序在当前平台上的命名
-    /// </summary>
-    private static readonly string FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "ken.exe" : "ken";
-
-    /// <summary>
-    /// 正在执行的程序路径
-    /// </summary>
-    private static readonly string FilePath = Path.Combine(AppContext.BaseDirectory, FileName);
-
-    /// <summary>
-    /// 当前程序的版本号
-    /// </summary>
-    private static readonly string CurrentVersion = ThisAssembly.Info.InformationalVersion;
-
-    /// <summary>
-    /// 强制升级
-    /// </summary>
-    private static readonly Option<bool> Force = new(new[] { "-f", "--force" }, () => false,
-        "force update current version");
-
-    /// <summary>
-    /// 指定版本号
-    /// </summary>
-    private static readonly Option<string> Version = new(new[] { "-kv", "--ken-version" },
-        "force upgrade to specific current version");
-
-    /// <summary>
-    /// 在中国就启用代理地址
-    /// </summary>
-    private static readonly Option<ProxyEnum> Proxy = new(new[] { "-p", "--proxy" },
-        () => IpService.ImInChina().GetAwaiter().GetResult() ? ProxyEnum.Ghproxy : ProxyEnum.Github,
-        "use proxy");
-
-    /// <summary>
-    /// 请求github-api的token，默认每小时60次请求限制
-    /// </summary>
-    private static readonly Option<string> Token = new(new[] { "-t", "--token" }, () => "",
-        "github token for query github-api");
-
+    private const string DownloadServer = "https://github.com/kentxxq/kentxxq.Cli/releases/download/";
+    private static readonly Option<bool> Force = new("--force", "-f") { Description = "强制更新" };
+    private static readonly Option<string?> Version = new("--ken-version", "-kv") { Description = "指定版本标签" };
+    private static readonly Option<ProxyEnum> Proxy = new("--proxy", "-p") { DefaultValueFactory = _ => ProxyEnum.Github, Description = "下载代理，默认 GitHub 直连" };
+    private static readonly Option<string> Token = new("--token", "-t") { DefaultValueFactory = _ => "", Description = "GitHub API 令牌" };
 
     public static Command GetCommand()
     {
-        var command = new Command("update", "update ken command")
+        var command = new Command("update", "更新当前 ken 程序") { Force, Version, Proxy, Token };
+        command.SetAction(async (result, ct) =>
         {
-            Force,
-            Version,
-            Proxy,
-            Token
-        };
-
-        command.SetHandler(async context =>
-        {
-            var force = context.ParseResult.GetValueForOption(Force);
-            var specificVersion = context.ParseResult.GetValueForOption(Version);
-            var proxy = context.ParseResult.GetValueForOption(Proxy);
-            var token = context.ParseResult.GetValueForOption(Token);
-            // 需要下载的版本号
-            var downloadVersion = specificVersion;
-            // 打印当前信息
-            PrintCurrentInformation();
-            // 如果没有指定版本，则拿到最新版本号
-            if (string.IsNullOrEmpty(specificVersion))
+            if (!Enum.IsDefined(result.GetValue(Proxy))) throw new ArgumentException("代理选项无效。");
+            var file = Environment.ProcessPath ?? throw new InvalidOperationException("无法定位当前程序。");
+            if (Path.GetFileNameWithoutExtension(file).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("请使用发布后的独立程序执行更新。");
+            var asset = GetServerFileName();
+            var current = ThisAssembly.Info.InformationalVersion.Split('+')[0];
+            MyAnsiConsole.MarkupSuccessLine($"当前版本：{current}");
+            var version = result.GetValue(Version);
+            if (string.IsNullOrWhiteSpace(version))
             {
-                try
-                {
-                    downloadVersion = await GetLatestVersion(token!);
-                }
-                catch (RateLimitExceededException e)
-                {
-                    MyAnsiConsole.MarkupErrorLine($"{e.Message}. you can set token through -t");
-                    context.ExitCode = 1;
-                    return;
-                }
-
-                AnsiConsole.MarkupLine($"latest version:{downloadVersion}");
+                var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
+                var token = result.GetValue(Token);
+                if (!string.IsNullOrEmpty(token)) client.Credentials = new Credentials(token);
+                var release = await client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli").WaitAsync(ct);
+                version = release.TagName;
             }
-
-            // 判断是否更新程序
-            if (!force && CurrentVersion == downloadVersion)
+            if (!result.GetValue(Force) && current.TrimStart('v') == version.TrimStart('v'))
             {
-                MyAnsiConsole.MarkupSuccessLine("It's the latest version now!");
+                MyAnsiConsole.MarkupSuccessLine("已经是最新版本。");
+                return;
             }
-            else
+            var proxy = result.GetValue(Proxy);
+            var url = new ProxyStrategy(proxy).GetDownloadUrl(proxy, DownloadServer + Uri.EscapeDataString(version) + "/" + asset);
+            using var clientHttp = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+            var temporary = file + ".ken-download-" + Guid.NewGuid().ToString("N");
+            try
             {
-                await UpdateKen(downloadVersion!, proxy);
+                await Download(clientHttp, new Uri(url), temporary, ct);
+                if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(temporary, File.GetUnixFileMode(file));
+                ReplaceExecutable(file, temporary);
+                MyAnsiConsole.MarkupSuccessLine("更新成功，旧程序已保留为 .ken-old。");
+            }
+            finally
+            {
+                if (File.Exists(temporary)) File.Delete(temporary);
             }
         });
         return command;
     }
 
-    /// <summary>
-    /// 输出当前的程序信息
-    /// </summary>
-    private static void PrintCurrentInformation()
+    internal static async Task Download(HttpClient client, Uri url, string destination, CancellationToken ct)
     {
-        var path = new TextPath($"{FilePath}")
-            .RootStyle(new Style(Color.Red))
-            .SeparatorStyle(new Style(Color.Green))
-            .StemStyle(new Style(Color.Blue))
-            .LeafStyle(new Style(Color.Yellow));
-        Console.Write("current file: ");
-        AnsiConsole.Write(path);
-        Console.WriteLine();
-        AnsiConsole.MarkupLine($"current version: {CurrentVersion}");
-    }
-
-    /// <summary>
-    /// 获取github上最新的版本号
-    /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
-    private static async Task<string> GetLatestVersion(string token)
-    {
-        var client = new GitHubClient(new ProductHeaderValue("ken-cli"));
-        if (!string.IsNullOrEmpty(token))
+        try
         {
-            client.Credentials = new Credentials(token);
-        }
-
-        var latestRelease = await client.Repository.Release.GetLatest("kentxxq", "kentxxq.Cli");
-        return latestRelease.TagName;
-    }
-
-    /// <summary>
-    /// 更新本体
-    /// </summary>
-    private static async Task UpdateKen(string version, ProxyEnum proxy)
-    {
-        // 下载对应最新的cli
-        await AnsiConsole.Status()
-            .StartAsync($"Downloading from {proxy.ToString()}...", async _ =>
+            using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            response.EnsureSuccessStatusCode();
+            await using (var stream = new FileStream(destination, FileMode.CreateNew, FileAccess.Write))
             {
-                var ok = await DownloadNewVersion(version, proxy);
-                if (ok)
-                {
-                    if (File.Exists(OldFilePath))
-                    {
-                        File.Delete(OldFilePath);
-                    }
-
-                    // 移动当前的版本
-                    File.Move(FilePath, OldFilePath);
-
-                    // 非windows系统添加权限
-                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                        // MyAnsiConsole.MarkupWarningLine($"you should : chmod +x {FilePath}");
-                    {
-                        File.SetUnixFileMode(NewFilePath,
-                            UnixFileMode.UserExecute | UnixFileMode.UserRead | UnixFileMode.UserWrite |
-                            UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute |
-                            UnixFileMode.OtherRead);
-                    }
-
-                    // 将新版本cli放到现有的位置
-                    File.Move(NewFilePath, FilePath);
-                    MyAnsiConsole.MarkupSuccessLine("update successfully");
-                }
-            });
+                await response.Content.CopyToAsync(stream, ct);
+                if (stream.Length < 4 || response.Content.Headers.ContentLength is long expected && stream.Length != expected)
+                    throw new InvalidDataException("下载文件为空或不完整。");
+            }
+            // 拒绝返回 HTTP 200 的错误网页；此检查不替代发布方签名。
+            await using var input = File.OpenRead(destination);
+            var header = new byte[4];
+            await input.ReadExactlyAsync(header, ct);
+            var valid = OperatingSystem.IsWindows() ? header[0] == 'M' && header[1] == 'Z'
+                : OperatingSystem.IsLinux() ? header.SequenceEqual(new byte[] { 0x7f, 0x45, 0x4c, 0x46 })
+                : header.SequenceEqual(new byte[] { 0xcf, 0xfa, 0xed, 0xfe }) || header.SequenceEqual(new byte[] { 0xfe, 0xed, 0xfa, 0xcf });
+            if (!valid) throw new InvalidDataException("下载内容不是当前平台的可执行文件。");
+        }
+        catch
+        {
+            if (File.Exists(destination)) File.Delete(destination);
+            throw;
+        }
     }
 
-    /// <summary>
-    /// 下载最新的版本
-    /// </summary>
-    /// <param name="version">特定的版本号</param>
-    /// <param name="proxy">是否启用代理</param>
-    private static async Task<bool> DownloadNewVersion(string version, ProxyEnum proxy)
+    internal static void ReplaceExecutable(string current, string downloaded)
     {
-        var httpClient = new HttpClient();
-        if (File.Exists(NewFilePath))
+        if (!File.Exists(downloaded)) throw new FileNotFoundException("更新文件不存在。");
+        var backup = current + ".ken-old";
+        File.Move(current, backup, true);
+        try { File.Move(downloaded, current); }
+        catch
         {
-            File.Delete(NewFilePath);
+            File.Move(backup, current);
+            throw;
         }
-
-        await using var fs = new FileStream(NewFilePath, FileMode.Create, FileAccess.Write);
-
-        var p = new ProxyStrategy(proxy);
-        var url = p.GetDownloadUrl(proxy, DownloadServer + version + "/" + ServerFileName);
-
-        var res = await httpClient.GetAsync(url);
-        if (res.IsSuccessStatusCode)
-        {
-            await res.Content.CopyToAsync(fs);
-            return true;
-        }
-
-        // Activator.CreateInstance(
-        //     Type.GetType("System.EventArgs;System.Random") ?? throw new InvalidOperationException());
-
-        MyAnsiConsole.MarkupErrorLine($"{version} not found!!!");
-        return false;
     }
 
-    /// <summary>
-    /// 根据不同平台，拿到服务器上对应的文件名。例如ken-win-x64.exe
-    /// </summary>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
     private static string GetServerFileName()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        var architecture = RuntimeInformation.ProcessArchitecture;
+        var rid = (OperatingSystem.IsWindows(), OperatingSystem.IsLinux(), OperatingSystem.IsMacOS(), architecture) switch
         {
-            switch (RuntimeInformation.OSArchitecture)
-            {
-                // TODO 还少了musl
-                case Architecture.Arm:
-                    return "ken-linux-arm";
-                case Architecture.Arm64:
-                    return "ken-linux-arm64";
-                case Architecture.X64:
-                    return "ken-linux-x64";
-                case Architecture.X86:
-                case Architecture.Wasm:
-                case Architecture.S390x:
-                default:
-                    throw new ArgumentException("unsupported os platform");
-            }
-        }
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            switch (RuntimeInformation.OSArchitecture)
-            {
-                case Architecture.Arm:
-                    return "ken-win-arm.exe";
-                case Architecture.Arm64:
-                    return "ken-win-arm64.exe";
-                case Architecture.X86:
-                    return "ken-win-x86.exe";
-                case Architecture.X64:
-                    return "ken-win-x64.exe";
-                case Architecture.Wasm:
-                case Architecture.S390x:
-                default:
-                    throw new ArgumentException("unsupported os platform");
-            }
-        }
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            switch (RuntimeInformation.OSArchitecture)
-            {
-                case Architecture.X64:
-                    return "ken-osx-x64";
-                case Architecture.Arm64:
-                    return "ken-osx-arm64";
-                case Architecture.X86:
-                case Architecture.Wasm:
-                case Architecture.S390x:
-                case Architecture.Arm:
-                default:
-                    throw new ArgumentException("unsupported os platform");
-            }
-        }
-
-        throw new ArgumentException("unknown os platform");
+            (true, _, _, Architecture.X64) => "win-x64.exe",
+            (true, _, _, Architecture.X86) => "win-x86.exe",
+            (true, _, _, Architecture.Arm64) => "win-arm64.exe",
+            (_, true, _, Architecture.X64) => "linux-x64",
+            (_, true, _, Architecture.Arm) => "linux-arm",
+            (_, true, _, Architecture.Arm64) => "linux-arm64",
+            (_, _, true, Architecture.X64) => "osx-x64",
+            (_, _, true, Architecture.Arm64) => "osx-arm64",
+            _ => throw new PlatformNotSupportedException("当前平台没有发布产物。")
+        };
+        return "ken-" + rid;
     }
 }

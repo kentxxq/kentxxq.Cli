@@ -3,81 +3,49 @@ on:
   push:
     tags:
       - '*'
-#    branches:
-#      - "master"
-#      - "test"
 
-concurrency: cicd
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   create-release:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
-        uses: actions/checkout@v2
+      - name: 检出代码
+        uses: actions/checkout@v7.0.1
 
-      - name: setup dotnet
-        uses: actions/setup-dotnet@v1
+      - name: 安装 .NET SDK
+        uses: actions/setup-dotnet@v6.0.0
         with:
-          dotnet-version: '9.0.x'
-          include-prerelease: true
+          global-json-file: global.json
 
-#      - name: build
-#        run: |
-#          dotnet publish -r linux-x64 -c Release -p:AssemblyName=ken-linux-x64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
-#          dotnet publish -r linux-musl-x64 -c Release -p:AssemblyName=ken-linux-musl-x64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
-#          dotnet publish -r linux-arm -c Release -p:AssemblyName=ken-linux-arm -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
-#          dotnet publish -r linux-arm64 -c Release -p:AssemblyName=ken-linux-arm64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true
-#          dotnet publish -r win-x64 -c Release -p:AssemblyName=ken-win-x64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-#          dotnet publish -r win-x86 -c Release -p:AssemblyName=ken-win-x86 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-#          dotnet publish -r win-arm -c Release -p:AssemblyName=ken-win-arm -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-#          dotnet publish -r win-arm64 -c Release -p:AssemblyName=ken-win-arm64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-#          dotnet publish -r osx-x64 -c Release -p:AssemblyName=ken-osx-x64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-#          dotnet publish -r osx-arm64 -c Release -p:AssemblyName=ken-osx-arm64 -p:DebugType=None -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-
-      - name: build
+      - name: 发布八个平台的独立程序
+        shell: bash
         run: |
-          dotnet publish -r win-x64 -c Release -p:AssemblyName=ken-win-x64 -p:DebugType=None -p:PublishSingleFile=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-          dotnet publish -r win-x86 -c Release -p:AssemblyName=ken-win-x86 -p:DebugType=None -p:PublishSingleFile=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-          dotnet publish -r win-arm64 -c Release -p:AssemblyName=ken-win-arm64 -p:DebugType=None -p:PublishSingleFile=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-          dotnet publish -r linux-x64 -c Release -p:AssemblyName=ken-linux-x64 -p:DebugType=None -p:PublishSingleFile=true --self-contained true
-          dotnet publish -r linux-arm -c Release -p:AssemblyName=ken-linux-arm -p:DebugType=None -p:PublishSingleFile=true --self-contained true
-          dotnet publish -r linux-arm64 -c Release -p:AssemblyName=ken-linux-arm64 -p:DebugType=None -p:PublishSingleFile=true --self-contained true
-          dotnet publish -r osx-x64 -c Release -p:AssemblyName=ken-osx-x64 -p:DebugType=None -p:PublishSingleFile=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
-          dotnet publish -r osx-arm64 -c Release -p:AssemblyName=ken-osx-arm64 -p:DebugType=None -p:PublishSingleFile=true -p:IncludeNativeLibrariesInSingleFile=true --self-contained true
+          set -euo pipefail
+          mkdir -p release
+          for rid in win-x64 win-x86 win-arm64 linux-x64 linux-arm linux-arm64 osx-x64 osx-arm64; do
+            name="ken-$rid"
+            suffix=""
+            if [[ "$rid" == win-* ]]; then suffix=".exe"; fi
+            dotnet publish src/Cli/Cli.csproj -r "$rid" -c Release \
+              -p:AssemblyName="$name" -p:DebugType=None -p:PublishSingleFile=true \
+              -p:IncludeNativeLibrariesInSingleFile=true --self-contained true \
+              --disable-build-servers -o "publish/$rid"
+            cp "publish/$rid/$name$suffix" "release/$name$suffix"
+          done
 
-
-      - name: create-release
-        uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: false
-          title: "${{ github.ref_name }}"
-          files: |
-            src/Cli/bin/Release/net9.0/win-x64/publish/ken-win-x64.exe
-            src/Cli/bin/Release/net9.0/win-x86/publish/ken-win-x86.exe
-            src/Cli/bin/Release/net9.0/win-arm64/publish/ken-win-arm64.exe
-            src/Cli/bin/Release/net9.0/linux-x64/publish/ken-linux-x64
-            src/Cli/bin/Release/net9.0/linux-arm/publish/ken-linux-arm
-            src/Cli/bin/Release/net9.0/linux-arm64/publish/ken-linux-arm64
-            src/Cli/bin/Release/net9.0/osx-x64/publish/ken-osx-x64
-            src/Cli/bin/Release/net9.0/osx-arm64/publish/ken-osx-arm64
-
-
-#      - name: push qiniu
-#        run: |
-#          curl -L -o qrsctl https://devtools.qiniu.com/linux/amd64/qrsctl?ref=developer.qiniu.com
-#          chmod +x qrsctl
-#          ./qrsctl login ${{ secrets.QN_USERNAME }} ${{ secrets.QN_PASSWORD }}
-#          ./qrsctl put -c kentxxq ken-linux-x64 src/Cli/bin/Release/net6.0/linux-x64/publish/ken-linux-x64
-#          ./qrsctl put -c kentxxq ken-linux-musl-x64 src/Cli/bin/Release/net6.0/linux-musl-x64/publish/ken-linux-musl-x64
-#          ./qrsctl put -c kentxxq ken-linux-arm src/Cli/bin/Release/net6.0/linux-arm/publish/ken-linux-arm
-#          ./qrsctl put -c kentxxq ken-linux-arm64 src/Cli/bin/Release/net6.0/linux-arm64/publish/ken-linux-arm64
-#          ./qrsctl put -c kentxxq ken-win-x64.exe src/Cli/bin/Release/net6.0/win-x64/publish/ken-win-x64.exe
-#          ./qrsctl put -c kentxxq ken-win-x86.exe src/Cli/bin/Release/net6.0/win-x86/publish/ken-win-x86.exe
-#          ./qrsctl put -c kentxxq ken-win-arm.exe src/Cli/bin/Release/net6.0/win-arm/publish/ken-win-arm.exe
-#          ./qrsctl put -c kentxxq ken-win-arm64.exe src/Cli/bin/Release/net6.0/win-arm64/publish/ken-win-arm64.exe
-#          ./qrsctl put -c kentxxq ken-osx-x64 src/Cli/bin/Release/net6.0/osx-x64/publish/ken-osx-x64
-#          ./qrsctl put -c kentxxq ken-osx-arm64 src/Cli/bin/Release/net6.0/osx-arm64/publish/ken-osx-arm64
+      - name: 创建 GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$RELEASE_TAG" release/* --verify-tag --fail-on-no-commits --title "$RELEASE_TAG" --generate-notes
 
 

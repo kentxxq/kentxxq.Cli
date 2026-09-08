@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -8,13 +8,7 @@ namespace Cli.Commands.ken_mirror;
 
 public static class Nuget
 {
-    private static readonly Option<NugetMirrorEnum> NugetMirror = new(
-        new[] { "-m", "--mirror" },
-        ()=>NugetMirrorEnum.Huawei,
-        $"default {NugetMirrorEnum.Huawei} registry: https://mirrors.cloud.tencent.com/nuget/"
-    );
-
-    private static readonly string CommandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "dotnet.exe" : "dotnet";
+    private static readonly Option<NugetMirrorEnum> NugetMirror = new("--mirror", "-m") { Description = "NuGet 源，默认 Huawei", DefaultValueFactory = _ => NugetMirrorEnum.Huawei };
     
     public static Command GetCommand()
     {
@@ -22,35 +16,35 @@ public static class Nuget
         {
             NugetMirror
         };
-        command.SetHandler(context =>
+        command.SetAction(async (context, cancellationToken) =>
         {
-            var nugetMirror = context.ParseResult.GetValueForOption(NugetMirror);
+            var nugetMirror = context.GetValue(NugetMirror);
+            if (!Enum.IsDefined(nugetMirror)) throw new ArgumentException("镜像选项无效。");
             MyAnsiConsole.MarkupSuccessLine($"使用的nuget源为 :{nugetMirror}");
-            SetNugetMirror(nugetMirror);
-            return Task.CompletedTask;
+            await SetNugetMirror(nugetMirror);
         });
         return command;
     }
 
-    private static void SetNugetMirror(NugetMirrorEnum nugetMirrorEnum)
+    private static async Task SetNugetMirror(NugetMirrorEnum mirror)
     {
-        MyLog.Logger?.Debug("nuget名称:{CommandName}", CommandName);
-        
-        var nugetPath = Finder.FindCommand(CommandName);
-        if (!string.IsNullOrEmpty(nugetPath))
-        {
-            var url = nugetMirrorEnum.ToStringFast();
-            SubProcess.Run(nugetPath,$"nuget add source --name {nugetMirrorEnum} {url}");
-            
-            SubProcess.Run(nugetPath,$"nuget update source --name {nugetMirrorEnum} {url}");
-            
-            MyAnsiConsole.MarkupSuccessLine("验证方法: dotnet nuget list source");
-            
-            MyAnsiConsole.MarkupSuccessLine("你应该通过 dotnet nuget enable/disable source source_name 来指定使用的源");
-        }
-        else
-        {
-            MyAnsiConsole.MarkupWarningLine("没有找到dotnet命令");
-        }
+        var path = OperatingSystem.IsWindows()
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NuGet", "NuGet.Config")
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "NuGet", "NuGet.Config");
+        await WriteMirror(path, mirror);
+        MyAnsiConsole.MarkupSuccessLine("NuGet 源已添加或更新，其他源及启用状态保持不变。");
+    }
+
+    internal static async Task WriteMirror(string path, NugetMirrorEnum mirror)
+    {
+        var doc = File.Exists(path) ? System.Xml.Linq.XDocument.Load(path) : new System.Xml.Linq.XDocument(new System.Xml.Linq.XElement("configuration"));
+        var root = doc.Root ?? throw new InvalidDataException("NuGet 配置为空。");
+        if (root.Name != "configuration") throw new InvalidDataException("NuGet 根节点无效。");
+        var sources = root.Element("packageSources");
+        if (sources is null) { sources = new System.Xml.Linq.XElement("packageSources"); root.Add(sources); }
+        var entry = sources.Elements("add").FirstOrDefault(e => (string?)e.Attribute("key") == mirror.ToString());
+        if (entry is null) { entry = new System.Xml.Linq.XElement("add", new System.Xml.Linq.XAttribute("key", mirror.ToString())); sources.Add(entry); }
+        entry.SetAttributeValue("value", mirror.ToStringFast(useMetadataAttributes: true));
+        await Create.WriteConfig(path, doc.ToString());
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.Linq;
@@ -18,12 +18,12 @@ public class MirrorCommand
     {
         var command = new Command("mirror", "set target mirror");
 
-        command.AddCommand(NodeJS.GetCommand());
-        command.AddCommand(Golang.GetCommand());
-        command.AddCommand(DockerHub.GetCommand());
-        command.AddCommand(Nuget.GetCommand());
-        command.AddCommand(Python.GetCommand());
-        command.AddCommand(Java.GetCommand());
+        command.Subcommands.Add(NodeJS.GetCommand());
+        command.Subcommands.Add(Golang.GetCommand());
+        command.Subcommands.Add(DockerHub.GetCommand());
+        command.Subcommands.Add(Nuget.GetCommand());
+        command.Subcommands.Add(Python.GetCommand());
+        command.Subcommands.Add(Java.GetCommand());
         return command;
     }
 }

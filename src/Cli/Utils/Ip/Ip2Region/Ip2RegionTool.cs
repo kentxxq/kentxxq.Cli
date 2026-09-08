@@ -22,12 +22,12 @@ public class Ip2RegionTool
     /// </summary>
     /// <param name="ip"></param>
     /// <returns></returns>
-    public static async Task<IpServiceModel> GetIpInfo(string ip)
+    public static async Task<IpServiceModel> GetIpInfo(string ip, CancellationToken ct = default)
     {
-        var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
         var result =
             await httpClient.GetFromJsonAsync<IpServiceModel>($"https://uni.kentxxq.com/ip/{ip}",
-                MyJsonSerializerOptions);
+                MyJsonSerializerOptions, ct);
         return result ?? throw new ApplicationException("无法从uni.kentxxq.com/ip获取ip信息");
     }
 }

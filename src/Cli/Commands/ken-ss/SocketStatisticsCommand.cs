@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.CommandLine;
 using System.Net.NetworkInformation;
 
@@ -10,7 +10,7 @@ public static class SocketStatisticsCommand
     {
         var command = new Command("ss", "active tcp listening");
 
-        command.SetHandler(Run);
+        command.SetAction(_ => Run());
         return command;
     }
 

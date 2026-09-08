@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -16,11 +16,11 @@ public static class IpApiTool
     /// <param name="ip"></param>
     /// <returns></returns>
     /// <exception cref="ApplicationException"></exception>
-    public static async Task<IpServiceModel> GetIpInfo(string ip)
+    public static async Task<IpServiceModel> GetIpInfo(string ip, CancellationToken ct = default)
     {
-        var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
-        var data = await httpClient.GetFromJsonAsync<IpApiModel>($"http://ip-api.com/json/{ip}?lang=zh-CN");
-        if (data!.Status != "success")
+        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+        var data = await httpClient.GetFromJsonAsync<IpApiModel>($"http://ip-api.com/json/{ip}?lang=zh-CN", ct);
+        if (data is null || data.Status != "success")
         {
             throw new ApplicationException("查询失败");
         }

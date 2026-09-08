@@ -1,94 +1,65 @@
-﻿using System;
-using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Curl.CommandLine.Parser;
 
 namespace Cli.Utils;
 
-public class HttpTools
+public static class HttpTools
 {
-    /// <summary>
-    /// curl命令转换成HttpRequestMessage对象
-    /// </summary>
-    /// <param name="curlCommand"></param>
-    /// <returns></returns>
-    public static async Task<HttpRequestMessage?> CurlToHttpRequestMessage(string curlCommand)
+    public static async Task<string?> ReadCurlFile(FileInfo? file, CancellationToken ct)
     {
-        HttpRequestMessage? request = null;
-        var parser = new CurlParser();
-        var output = parser.Parse(curlCommand);
-        if (output is { Success: true })
-        {
-            MyLog.Logger?.Debug("curl文件解析成功");
-            // MyLog.Logger?.Debug($"{output.Data.HttpMethod} {output.Data.Url}");
-            // MyLog.Logger?.Debug($"Header: {string.Join(",",output.Data.Headers)}");
-            // MyLog.Logger?.Debug($"Body: {output.Data.UploadData.First().Content??"无Content"}");
+        if (file is null) return null;
+        if (!file.Exists) throw new FileNotFoundException("curl 文件不存在。");
+        var text = await File.ReadAllTextAsync(file.FullName, ct);
+        if (string.IsNullOrWhiteSpace(text)) throw new ArgumentException("curl 文件为空。");
+        return text;
+    }
 
-            //header
-            request = new HttpRequestMessage(new HttpMethod(output.Data.HttpMethod), output.Data.Url);
+    public static async Task<HttpRequestMessage> CreateRequest(string? url, string? curl)
+    {
+        if (curl is not null) return await CurlToHttpRequestMessage(curl);
+        ValidateUrl(url);
+        return new HttpRequestMessage(HttpMethod.Get, url);
+    }
+
+    private static void ValidateUrl(string? url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
+            throw new ArgumentException("需要有效的 HTTP 或 HTTPS 地址。");
+    }
+
+    public static Task<HttpRequestMessage> CurlToHttpRequestMessage(string curlCommand)
+    {
+        var output = new CurlParser().Parse(curlCommand);
+        if (!output.Success) throw new ArgumentException("无法解析 curl 文件。");
+        ValidateUrl(output.Data.Url?.ToString());
+        var request = new HttpRequestMessage(new HttpMethod(output.Data.HttpMethod), output.Data.Url);
+        try
+        {
+            var uploads = output.Data.UploadData?.ToList();
+            if (uploads is { Count: > 1 }) throw new ArgumentException("暂不支持多个 curl 请求体。");
+            if (uploads is { Count: 1 }) request.Content = new StringContent(uploads[0].Content ?? "");
             foreach (var header in output.Data.Headers)
             {
-                if (header.Key != "content-type")
-                {
-                    request.Headers.Add(header.Key,header.Value);
-                }
+                if (request.Headers.TryAddWithoutValidation(header.Key, header.Value)) continue;
+                request.Content ??= new ByteArrayContent([]);
+                request.Content.Headers.Remove(header.Key);
+                if (!request.Content.Headers.TryAddWithoutValidation(header.Key, header.Value))
+                    throw new ArgumentException("不支持的 curl 请求头。");
             }
-
-            //content
-            if (output.Data.Headers.ContainsKey("content-type"))
-            {
-                request.Content = new StringContent(output.Data.UploadData.First().Content);
-                request.Content.Headers.ContentType = new MediaTypeHeaderValue(output.Data.Headers["content-type"]);
-            }
-            
-            MyLog.Logger?.Debug(await HttpRequestMessageToString(request));
-
+            return Task.FromResult(request);
         }
-
-        return request;
-    }
-
-    /// <summary>
-    /// HttpResponseMessage转成格式化好的字符串
-    /// </summary>
-    /// <param name="httpResponseMessage"></param>
-    /// <returns></returns>
-    public static async Task<string> HttpResponseMessageToString(HttpResponseMessage httpResponseMessage)
-    {
-        var data = httpResponseMessage.Headers.ToDictionary(h => h.Key, h => h.Value.First().ToString());
-        var body = await httpResponseMessage.Content.ReadAsStringAsync();
-        data.Add("body",body);
-        data.Add("statusCode",$"{(int)httpResponseMessage.StatusCode}{httpResponseMessage.StatusCode}");
-        return JsonSerializer.Serialize(data, new JsonSerializerOptions
+        catch
         {
-            WriteIndented = true,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        });
-    }
-    
-    /// <summary>
-    /// HttpRequestMessage转成格式化好的字符串
-    /// </summary>
-    /// <param name="httpRequestMessage"></param>
-    /// <returns></returns>
-    public static async Task<string> HttpRequestMessageToString(HttpRequestMessage httpRequestMessage)
-    {
-        var data = httpRequestMessage.Headers.ToDictionary(h => h.Key, h => h.Value.First().ToString());
-        data.Add("url",httpRequestMessage.RequestUri?.ToString()??string.Empty);
-
-        if (httpRequestMessage.Content is StringContent stringContent)
-        {
-            data.Add("body",await stringContent.ReadAsStringAsync());
+            request.Dispose();
+            throw;
         }
-        
-        return JsonSerializer.Serialize(data, new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        });
     }
+
+    // 调试输出只保留协议元数据，不读取或记录请求头和正文。
+    public static Task<string> HttpRequestMessageToString(HttpRequestMessage request) =>
+        Task.FromResult(JsonSerializer.Serialize(new { method = request.Method.Method, url = "fake_url", body = "fake_info" }));
+
+    public static Task<string> HttpResponseMessageToString(HttpResponseMessage response) =>
+        Task.FromResult(JsonSerializer.Serialize(new { statusCode = (int)response.StatusCode, body = "fake_info" }));
 }

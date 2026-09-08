@@ -1,9 +1,8 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using k8s;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Cli.Commands.ken_k8s;
 
@@ -24,5 +23,11 @@ public static class ConfigUtils
 
         var config = await KubernetesClientConfiguration.BuildConfigFromConfigFileAsync(new FileInfo(configPath));
         return config;
+    }
+    public static async Task<IEnumerable<string>> GetNamespaces(Kubernetes client, string? requested, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(requested)) return [requested];
+        var namespaces = await client.CoreV1.ListNamespaceAsync(cancellationToken: ct);
+        return namespaces.Items.Select(n => n.Metadata.Name);
     }
 }

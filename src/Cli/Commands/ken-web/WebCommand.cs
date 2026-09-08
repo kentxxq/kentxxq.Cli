@@ -1,11 +1,11 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using System.IO;
 using Cli.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Hosting;
 
 namespace Cli.Commands.ken_web;
 
@@ -14,12 +14,12 @@ public static class WebCommand
     /// <summary>
     /// web的根路径
     /// </summary>
-    private static readonly Option<string> Webroot = new(new[] { "-w", "--webroot" }, () => ".", "file path");
+    private static readonly Option<string> Webroot = new("--webroot", "-w") { Description = "file path", DefaultValueFactory = _ => "." };
 
     /// <summary>
     /// http-server的端口
     /// </summary>
-    private static readonly Option<int> Port = new(new[] { "-p", "--port" }, () => 5000, "http port");
+    private static readonly Option<int> Port = new("--port", "-p") { Description = "http port", DefaultValueFactory = _ => 5000 };
 
     public static Command GetCommand()
     {
@@ -28,10 +28,10 @@ public static class WebCommand
             Webroot,
             Port
         };
-        command.SetHandler(context =>
+        command.SetAction(async (context, cancellationToken) =>
         {
-            var webroot = context.ParseResult.GetValueForOption(Webroot);
-            var port = context.ParseResult.GetValueForOption(Port);
+            var webroot = context.GetValue(Webroot);
+            var port = context.GetValue(Port);
 
             if (string.IsNullOrEmpty(webroot))
             {
@@ -42,12 +42,13 @@ public static class WebCommand
                 webroot = Path.Combine(Directory.GetCurrentDirectory(), webroot!);
             }
 
-            Run(webroot, port);
+            if (port is < 1 or > 65535) throw new ArgumentException("端口无效。");
+            await Run(webroot, port, cancellationToken);
         });
         return command;
     }
 
-    private static void Run(string webroot, int port)
+    private static async Task Run(string webroot, int port, CancellationToken ct)
     {
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddDirectoryBrowser();
@@ -62,8 +63,8 @@ public static class WebCommand
             return !category.StartsWith("Microsoft");
         });
 
-        var app = builder.Build();
-        var fileProvider = new PhysicalFileProvider(webroot);
+        await using var app = builder.Build();
+        using var fileProvider = new PhysicalFileProvider(webroot);
         // 记录日志
         app.Use(async (context, next) =>
         {
@@ -71,12 +72,12 @@ public static class WebCommand
             if (context.Response.StatusCode.ToString().StartsWith("2"))
             {
                 MyAnsiConsole.MarkupSuccessLine(
-                    $"{context.Request.Protocol} {context.Request.Method} {context.Request.Path} {context.Response.StatusCode} {context.Response.ContentType} {context.Response.ContentLength}");
+                    $"{context.Request.Protocol} {context.Request.Method} fake_url {context.Response.StatusCode} {context.Response.ContentType} {context.Response.ContentLength}");
             }
             else
             {
                 MyAnsiConsole.MarkupWarningLine(
-                    $"{context.Request.Protocol} {context.Request.Method} {context.Request.Path} {context.Response.StatusCode} {context.Response.ContentType} {context.Response.ContentLength}");
+                    $"{context.Request.Protocol} {context.Request.Method} fake_url {context.Response.StatusCode} {context.Response.ContentType} {context.Response.ContentLength}");
             }
         });
         // 静态文件
@@ -90,12 +91,9 @@ public static class WebCommand
             FileProvider = fileProvider
         });
 
-#if DEBUG
-        MyAnsiConsole.MarkupSuccessLine($"listening http://localhost:{port}");
-#else
-        MyAnsiConsole.MarkupSuccessLine($"listening http://0.0.0.0:{port},http://127.0.0.1:{port}");
-#endif
         app.Urls.Add($"http://*:{port}");
-        app.Run();
+        await app.StartAsync(ct);
+        MyAnsiConsole.MarkupSuccessLine($"监听 http://0.0.0.0:{port}，目录浏览已启用。");
+        await app.WaitForShutdownAsync(ct);
     }
 }

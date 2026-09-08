@@ -1,107 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
+using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Cli.Utils.Ip.Ip2Region;
 using Cli.Utils.Ip.IpApi;
 
 namespace Cli.Utils.Ip;
 
-/// <summary>
-/// ip服务
-/// </summary>
 public static class IpService
 {
-    private static readonly List<string> ChinaStrings = new() { "中国", "CHINA", "china", "CN", "cn" };
+    private static readonly HttpClient Client = new() { Timeout = TimeSpan.FromSeconds(3) };
 
-    /// <summary>
-    /// 自己的ip是否在国内
-    /// </summary>
-    /// <returns></returns>
-    public static async Task<bool> ImInChina()
-    {
-        var myIP = await GetMyIP();
-        if (myIP == "0.0.0.0")
-        {
-            MyLog.Logger?.Debug("拿不到ip，默认在国内吧....");
-            return true;
-        }
+    public static async Task<bool> ImInChina() => await InChina(await GetMyIP());
 
-        return await InChina(myIP);
-    }
-
-    /// <summary>
-    /// 特定ip是否在国内
-    /// </summary>
-    /// <param name="ip"></param>
-    /// <returns></returns>
     public static async Task<bool> InChina(string ip)
     {
-        var result = await GetIpInfo(ip);
-        MyLog.Logger?.Debug("在国内？{Contains}",
-            ChinaStrings.Contains(result.Country) && result.Status == IpServiceQueryStatus.success);
-        return ChinaStrings.Contains(result.Country) && result.Status == IpServiceQueryStatus.success;
+        var info = await GetIpInfo(ip);
+        return info.Status == IpServiceQueryStatus.success &&
+            new[] { "中国", "china", "cn" }.Contains(info.Country, StringComparer.OrdinalIgnoreCase);
     }
 
-
-    /// <summary>
-    /// 拿到自己的ip地址。如果都报错，会变成0.0.0.0
-    /// </summary>
-    /// <returns></returns>
     public static async Task<string> GetMyIP()
     {
-        var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
-        string? data;
-        try
+        foreach (var endpoint in new[] { ("https://uni.kentxxq.com/ip", "ip"), ("https://httpbin.org/ip", "origin") })
         {
-            var result = await httpClient.GetStreamAsync("https://uni.kentxxq.com/ip");
-            var jsonDoc = await JsonDocument.ParseAsync(result);
-            data = jsonDoc.RootElement.GetProperty("ip").GetString();
+            try
+            {
+                using var document = await Client.GetFromJsonAsync<JsonDocument>(endpoint.Item1);
+                var text = document?.RootElement.GetProperty(endpoint.Item2).GetString()?.Split(',')[0].Trim();
+                if (IPAddress.TryParse(text, out var ip)) return ip.ToString();
+            }
+            catch (Exception e) when (e is HttpRequestException or OperationCanceledException or JsonException or KeyNotFoundException or InvalidOperationException) { }
         }
-        catch (Exception)
-        {
-            var result = await httpClient.GetStreamAsync("https://httpbin.org/ip");
-            var jsonDoc = await JsonDocument.ParseAsync(result);
-            data = jsonDoc.RootElement.GetProperty("origin").GetString();
-        }
-
-        MyLog.Logger?.Debug("通过api的查询结果，我的ip是: {Data}", data);
-        return string.IsNullOrEmpty(data) ? "0.0.0.0" : data;
+        return "0.0.0.0";
     }
 
-
-    /// <summary>
-    /// 获取特定ip信息
-    /// </summary>
-    /// <param name="ip"></param>
-    /// <returns></returns>
-    public static async Task<IpServiceModel> GetIpInfo(string ip)
+    public static async Task<IpServiceModel> GetIpInfo(string ip, CancellationToken ct = default)
     {
-        try
+        foreach (var query in new Func<string, CancellationToken, Task<IpServiceModel>>[] { Ip2RegionTool.GetIpInfo, IpApiTool.GetIpInfo })
         {
-            MyLog.Logger?.Debug("使用ip2region-20230509获取ip信息");
-            var result = await Ip2RegionTool.GetIpInfo(ip);
-            return result;
-        }
-        catch (HttpRequestException)
-        {
-            MyLog.Logger?.Debug("uni.kentxxq.com不通，使用ip-api.com");
-            var result = await IpApiTool.GetIpInfo(ip);
-            return result;
-        }
-        catch (Exception)
-        {
-            MyLog.Logger?.Debug("两个api都查询失败...说明我已经没有在维护了...");
-            return new IpServiceModel
+            try
             {
-                Status = IpServiceQueryStatus.fail,
-                IP = ip,
-                Country = "unknownCountry",
-                RegionName = "unknownRegionName",
-                City = "unknownCity",
-                Isp = "unknownIsp"
-            };
+                var result = await query(ip, ct);
+                if (result.Status == IpServiceQueryStatus.success) return result;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+            catch (Exception e) when (e is HttpRequestException or OperationCanceledException or JsonException or ApplicationException) { }
         }
+        return new IpServiceModel { Status = IpServiceQueryStatus.fail, IP = ip, Country = "unknown", RegionName = "unknown", City = "unknown", Isp = "unknown" };
     }
 }

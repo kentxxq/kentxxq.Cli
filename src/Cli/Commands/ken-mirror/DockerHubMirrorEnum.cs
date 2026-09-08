@@ -1,9 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using NetEscapades.EnumGenerators;
 
 namespace Cli.Commands.ken_mirror;
 
-[EnumExtensions]
+[EnumExtensions(MetadataSource = MetadataSource.DisplayAttribute)]
 public enum DockerHubMirrorEnum
 {
     [Display(Name = "https://hub-mirror.c.163.com")]

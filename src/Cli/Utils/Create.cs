@@ -1,63 +1,35 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Cli.Utils;
 
-public class Create
+public static class Create
 {
-    /// <summary>
-    /// 递归创建文件夹
-    /// </summary>
-    /// <param name="directory"></param>
-    /// <exception cref="ArgumentException"></exception>
-    public static void CreateDirectory(string directory)
-    {
-        if (string.IsNullOrEmpty(directory))
-        {
-            throw new ArgumentException("不能为空");
-        }
-        
-        var directories = directory.Split(Path.DirectorySeparatorChar).SkipLast(1);
-        var currentPath = "";
-        foreach (var dir in directories)
-        {
-            currentPath = Path.Combine(currentPath, dir);
+    public static void CreateDirectory(string directory) => Directory.CreateDirectory(directory);
 
-            if (!Directory.Exists(currentPath))
-            {
-                Directory.CreateDirectory(currentPath);
-            }
-        }
+    public static async Task CreateFile(string fullFilePath, string data = "")
+    {
+        var path = Path.GetFullPath(fullFilePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        await File.WriteAllTextAsync(path, data);
     }
 
-    /// <summary>
-    /// 递归创建文件夹和文件
-    /// </summary>
-    /// <param name="fullFilePath"></param>
-    /// <param name="data"></param>
-    /// <exception cref="ArgumentException"></exception>
-    public static async Task CreateFile(string fullFilePath,string data = "")
+    // 完整写入后才替换配置，备份与原文件放在一起以便恢复。
+    public static async Task WriteConfig(string path, string data)
     {
-        if (string.IsNullOrEmpty(fullFilePath))
+        path = Path.GetFullPath(path);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var temporary = path + ".ken-" + Guid.NewGuid().ToString("N") + ".tmp";
+        try
         {
-            throw new ArgumentException("不能为空");
-        }
-        
-        var directories = fullFilePath.Split(Path.DirectorySeparatorChar).SkipLast(1);
-        var currentPath = "";
-        foreach (var dir in directories)
-        {
-            currentPath = Path.Combine(currentPath, dir);
-
-            if (!Directory.Exists(currentPath))
+            await File.WriteAllTextAsync(temporary, data);
+            if (File.Exists(path))
             {
-                Directory.CreateDirectory(currentPath);
+                File.Copy(path, path + ".ken-backup-" + Guid.NewGuid().ToString("N"));
+                if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(temporary, File.GetUnixFileMode(path));
             }
+            File.Move(temporary, path, true);
         }
-
-        await File.WriteAllTextAsync(fullFilePath, data);
+        finally
+        {
+            if (File.Exists(temporary)) File.Delete(temporary);
+        }
     }
 }

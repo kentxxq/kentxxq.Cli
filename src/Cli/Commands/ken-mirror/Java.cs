@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.CommandLine;
 using System.Diagnostics;
 using System.IO;
@@ -12,11 +12,7 @@ namespace Cli.Commands.ken_mirror;
 
 public static class Java
 {
-    private static readonly Option<JavaMirrorEnum> JavaMirror = new(
-        new[] { "-m", "--mirror" },
-        ()=>JavaMirrorEnum.Aliyun,
-        $"default {JavaMirrorEnum.Aliyun} mirror: {JavaMirrorEnum.Aliyun.ToStringFast()}"
-    );
+    private static readonly Option<JavaMirrorEnum> JavaMirror = new("--mirror", "-m") { Description = $"default {JavaMirrorEnum.Aliyun} mirror: {JavaMirrorEnum.Aliyun.ToStringFast(useMetadataAttributes: true)}", DefaultValueFactory = _ => JavaMirrorEnum.Aliyun };
 
     private static readonly string ConfigPath =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), $".m2{Path.DirectorySeparatorChar}settings.xml");
@@ -27,89 +23,35 @@ public static class Java
         {
             JavaMirror
         };
-        command.SetHandler(async context =>
+        command.SetAction(async (context, cancellationToken) =>
         {
-            var javaMirror = context.ParseResult.GetValueForOption(JavaMirror);
+            var javaMirror = context.GetValue(JavaMirror);
+            if (!Enum.IsDefined(javaMirror)) throw new ArgumentException("镜像选项无效。");
             MyAnsiConsole.MarkupSuccessLine($"使用的maven源为 :{javaMirror}");
             await SetJavaMirror(javaMirror); 
         });
         return command;
     }
 
-    private static async Task SetJavaMirror(JavaMirrorEnum javaMirrorEnum)
+    private static async Task SetJavaMirror(JavaMirrorEnum mirror)
     {
-        MyLog.Logger?.Debug("配置文件路径:{ConfigPath}", ConfigPath);
-        if (!File.Exists(ConfigPath))
-        {
-            MyAnsiConsole.MarkupSuccessLine($"配置文件不存在，新建中：{ConfigPath}");
-            await Create.CreateFile(ConfigPath, """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
-                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
-                  <pluginGroups>
-                  </pluginGroups>
-                  <proxies>
-                  </proxies>
-                  <servers>
-                  </servers>
-                  <mirrors>
-                    <!-- mirror
-                     | Specifies a repository mirror site to use instead of a given repository. The repository that
-                     | this mirror serves has an ID that matches the mirrorOf element of this mirror. IDs are used
-                     | for inheritance and direct lookup purposes, and must be unique across the set of mirrors.
-                     |
-                    <mirror>
-                      <id>mirrorId</id>
-                      <mirrorOf>repositoryId</mirrorOf>
-                      <name>Human Readable Name for this Mirror.</name>
-                      <url>http://my.repository.com/repo/path</url>
-                    </mirror>
-                     -->
-                  </mirrors>
-                  <profiles>
-                  </profiles>
-                </settings>
-                """);
-        }
-        
+        await WriteMirror(ConfigPath, mirror);
+        MyAnsiConsole.MarkupSuccessLine("Maven 镜像配置已保存。");
+    }
 
-        var doc = new XmlDocument();
-        doc.Load(ConfigPath);
-
-        var mirrorsNode = doc.DocumentElement?["mirrors"];
-
-        // 删掉已存在的ken-mirror,原来的mirror不会修改
-        if (mirrorsNode?.ChildNodes != null)
-        {
-            MyAnsiConsole.MarkupWarningLine("检测到之前配置的ken-mirror，清理中...");
-            foreach (XmlNode node in mirrorsNode.ChildNodes)
-            {
-                if (node["id"]?.InnerText == "ken-mirror")
-                {
-                    mirrorsNode.RemoveChild(node);
-                }
-            }
-        }
-
-        // 开始创建mirror节点
-        var mirrorElement = doc.CreateElement("mirror",doc.DocumentElement?.NamespaceURI);
-        var idElement = doc.CreateElement("id",doc.DocumentElement?.NamespaceURI);
-        idElement.InnerText = "ken-mirror";
-        var mirrorOfElement = doc.CreateElement("mirrorOf",doc.DocumentElement?.NamespaceURI);
-        mirrorOfElement.InnerText = "*";
-        var nameElement = doc.CreateElement("name",doc.DocumentElement?.NamespaceURI);
-        nameElement.InnerText = javaMirrorEnum.ToString();
-        var urlElement = doc.CreateElement("url",doc.DocumentElement?.NamespaceURI);
-        urlElement.InnerText = javaMirrorEnum.ToStringFast();
-        
-        mirrorElement.AppendChild(idElement);
-        mirrorElement.AppendChild(mirrorOfElement);
-        mirrorElement.AppendChild(nameElement);
-        mirrorElement.AppendChild(urlElement);
-        
-        mirrorsNode?.AppendChild(mirrorElement);
-        
-        doc.Save(ConfigPath);
-        MyAnsiConsole.MarkupSuccessLine($"成功添加ken-mirror源,验证查看: {ConfigPath}");
+    internal static async Task WriteMirror(string path, JavaMirrorEnum mirror)
+    {
+        XNamespace ns = "http://maven.apache.org/SETTINGS/1.2.0";
+        var doc = File.Exists(path) ? XDocument.Load(path) : new XDocument(new XElement(ns + "settings"));
+        var root = doc.Root ?? throw new InvalidDataException("Maven 配置为空。");
+        if (root.Name.LocalName != "settings") throw new InvalidDataException("Maven 根节点无效。");
+        ns = root.Name.Namespace;
+        var mirrors = root.Element(ns + "mirrors");
+        if (mirrors is null) { mirrors = new XElement(ns + "mirrors"); root.Add(mirrors); }
+        mirrors.Elements(ns + "mirror").Where(e => (string?)e.Element(ns + "id") == "ken-mirror").Remove();
+        mirrors.Add(new XElement(ns + "mirror", new XElement(ns + "id", "ken-mirror"),
+            new XElement(ns + "mirrorOf", "*"), new XElement(ns + "name", mirror.ToString()),
+            new XElement(ns + "url", mirror.ToStringFast(useMetadataAttributes: true))));
+        await Create.WriteConfig(path, doc.ToString());
     }
 }

@@ -1,5 +1,5 @@
-﻿using System.CommandLine;
-using System.CommandLine.Builder;
+using System.CommandLine;
+
 using Cli.Commands.ken_bm;
 using Cli.Commands.ken_k8s;
 using Cli.Commands.ken_mirror;
@@ -19,24 +19,24 @@ public class AllCommands
     /// <summary>
     /// 连接成功后是否退出
     /// </summary>
-    private static readonly Option<bool> Debug = new(new[] { "--debug" }, () => false,
-        "enable verbose output");
+    private static readonly Option<bool> Debug = new("--debug") { Description = "enable verbose output", DefaultValueFactory = _ => false };
 
-    public static CommandLineBuilder BuildCommandLine()
+    public static RootCommand BuildCommandLine()
     {
         var rootCommand = new RootCommand();
-        rootCommand.AddGlobalOption(Debug);
-        rootCommand.AddCommand(SocketPingCommand.GetCommand());
-        rootCommand.AddCommand(WebSocketCommand.GetCommand());
-        rootCommand.AddCommand(SocketStatisticsCommand.GetCommand());
-        rootCommand.AddCommand(TracerouteCommand.GetCommand());
-        rootCommand.AddCommand(RedisCommand.GetCommand());
-        rootCommand.AddCommand(K8SCommand.GetCommand());
-        rootCommand.AddCommand(WebCommand.GetCommand());
-        rootCommand.AddCommand(UpdateCommand.GetCommand());
-        rootCommand.AddCommand(WebPingCommand.GetCommand());
-        rootCommand.AddCommand(BenchMarkCommand.GetCommand());
-        rootCommand.AddCommand(MirrorCommand.GetCommand());
-        return new CommandLineBuilder(rootCommand);
+        Debug.Recursive = true;
+        rootCommand.Options.Add(Debug);
+        rootCommand.Subcommands.Add(SocketPingCommand.GetCommand());
+        rootCommand.Subcommands.Add(WebSocketCommand.GetCommand());
+        rootCommand.Subcommands.Add(SocketStatisticsCommand.GetCommand());
+        rootCommand.Subcommands.Add(TracerouteCommand.GetCommand());
+        rootCommand.Subcommands.Add(RedisCommand.GetCommand());
+        rootCommand.Subcommands.Add(K8SCommand.GetCommand());
+        rootCommand.Subcommands.Add(WebCommand.GetCommand());
+        rootCommand.Subcommands.Add(UpdateCommand.GetCommand());
+        rootCommand.Subcommands.Add(WebPingCommand.GetCommand());
+        rootCommand.Subcommands.Add(BenchMarkCommand.GetCommand());
+        rootCommand.Subcommands.Add(MirrorCommand.GetCommand());
+        return rootCommand;
     }
 }

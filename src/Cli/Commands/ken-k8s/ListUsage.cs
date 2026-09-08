@@ -1,10 +1,10 @@
-﻿using System.CommandLine;
-using System.Linq;
-using System.Threading.Tasks;
+using System.CommandLine;
+using System.Globalization;
+using System.Text.Json;
 using k8s;
 using k8s.Models;
-using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
+using Cli.Utils;
 
 namespace Cli.Commands.ken_k8s;
 
@@ -12,93 +12,74 @@ public static class ListUsage
 {
     public static Command GetCommand()
     {
-        var command = new Command("2", "list deployment resource usage");
-        command.SetHandler(async context =>
+        var command = new Command("2", "汇总 Deployment 当前 Pod 的资源用量");
+        command.SetAction(async (result, ct) =>
         {
-            var configPath = context.ParseResult.GetValueForOption(K8SCommand.ConfigPath)?.Replace(" ", "");
-            var clusterNamespace = context.ParseResult.GetValueForOption(K8SCommand.ClusterNamespace);
-
-            var config = await ConfigUtils.GetConfig(configPath);
-            var client = new Kubernetes(config);
-            await PrintDeployUsageTable(client, clusterNamespace);
-            // TODO stateful、daemonSet的数据
-        });
-        return command;
-    }
-
-    private static async Task PrintDeployUsageTable(Kubernetes client, string? clusterNamespace)
-    {
-        var table = new Table();
-        // 表头
-        table.AddColumn("Namespace");
-        table.AddColumn("Deployment");
-        table.AddColumn("Replicas");
-        table.AddColumn("Memory Usage");
-        table.AddColumn("Cpu Usage");
-        table.AddColumn("Request Memory");
-        table.AddColumn("Limit Memory");
-        table.AddColumn("Request Cpu");
-        table.AddColumn("Limit Cpu");
-
-        await AnsiConsole.Live(table).StartAsync(async ctx =>
-        {
-            ctx.Refresh();
-            var namespaces = await client.ListNamespaceAsync();
-            if (!string.IsNullOrEmpty(clusterNamespace))
+            using var client = new Kubernetes(await ConfigUtils.GetConfig(result.GetValue(K8SCommand.ConfigPath)));
+            var table = new Table();
+            foreach (var title in new[] { "Namespace", "Deployment", "Replicas", "Memory Usage", "Cpu Usage", "Request Memory", "Limit Memory", "Request Cpu", "Limit Cpu" })
+                table.AddColumn(title);
+            foreach (var ns in await ConfigUtils.GetNamespaces(client, result.GetValue(K8SCommand.ClusterNamespace), ct))
             {
-                namespaces.Items = namespaces.Items.Where(n => n.Metadata.Name == clusterNamespace).ToList();
-            }
-
-            foreach (var ns in namespaces.Items)
-            {
-                // deployment信息
-                var dList = await client.ListNamespacedDeploymentAsync(ns.Metadata.Name);
-                // metrics信息
-                var mList = await client.GetKubernetesPodsMetricsByNamespaceAsync(ns.Metadata.Name);
-
-                foreach (var d in dList.Items)
+                var deployments = await client.AppsV1.ListNamespacedDeploymentAsync(ns, cancellationToken: ct);
+                var replicaSets = await client.AppsV1.ListNamespacedReplicaSetAsync(ns, cancellationToken: ct);
+                var pods = await client.CoreV1.ListNamespacedPodAsync(ns, cancellationToken: ct);
+                var usage = new Dictionary<(string Pod, string Container), IDictionary<string, ResourceQuantity>>();
+                try
                 {
-                    // 获取资源的配置信息
-                    ResourceQuantity? rm = null;
-                    ResourceQuantity? rc = null;
-                    ResourceQuantity? lm = null;
-                    ResourceQuantity? lc = null;
-                    var c = d.Spec.Template.Spec.Containers.First();
-                    c.Resources.Requests?.TryGetValue("memory", out rm);
-                    c.Resources.Limits?.TryGetValue("memory", out lm);
-                    c.Resources.Requests?.TryGetValue("cpu", out rc);
-                    c.Resources.Limits?.TryGetValue("cpu", out lc);
-
-                    // 使用率计算
-                    decimal memoryUsage = 0;
-                    decimal cpuUsage = 0;
-                    if (lm is not null)
+                    var raw = (JsonElement)await client.CustomObjects.GetNamespacedCustomObjectAsync(
+                        "metrics.k8s.io", "v1beta1", ns, "pods", string.Empty, cancellationToken: ct);
+                    var metrics = raw.Deserialize<PodMetricsList>() ?? throw new JsonException("metrics 响应为空。");
+                    foreach (var metric in metrics.Items)
+                    foreach (var container in metric.Containers)
+                        usage[(metric.Metadata.Name, container.Name)] = container.Usage;
+                }
+                catch (Exception exception) when (exception is k8s.Autorest.HttpOperationException or HttpRequestException or JsonException
+                    || exception is OperationCanceledException && !ct.IsCancellationRequested)
+                {
+                    MyAnsiConsole.MarkupWarningLine("无法读取 metrics，资源使用率显示 N/A。");
+                }
+                foreach (var deployment in deployments.Items)
+                {
+                    var ownedSets = replicaSets.Items.Where(r => r.Metadata.OwnerReferences?.Any(o => o.Kind == "Deployment" && o.Uid == deployment.Metadata.Uid && o.Controller == true) == true)
+                        .Select(r => r.Metadata.Uid).ToHashSet();
+                    var ownedPods = pods.Items.Where(p => p.Status?.Phase is not ("Succeeded" or "Failed") && p.Metadata.OwnerReferences?.Any(o => o.Kind == "ReplicaSet" && ownedSets.Contains(o.Uid) && o.Controller == true) == true).ToList();
+                    var containers = ownedPods.SelectMany(p => p.Spec.Containers.Select(c => (Pod: p.Metadata.Name, Container: c))).ToList();
+                    decimal? Total(string resource, bool limit)
                     {
-                        var metrics = mList.Items.Where(p => p.Metadata.Name.StartsWith(d.Metadata.Name)).ToList();
-                        var mUsage = metrics.First().Containers.First().Usage["memory"].ToDecimal();
-                        memoryUsage = mUsage / lm.ToDecimal();
+                        if (containers.Count == 0) return null;
+                        decimal total = 0;
+                        foreach (var entry in containers)
+                        {
+                            var values = limit ? entry.Container.Resources?.Limits : entry.Container.Resources?.Requests;
+                            if (values is null || !values.TryGetValue(resource, out var quantity)) return null;
+                            total += quantity.ToDecimal();
+                        }
+                        return total;
                     }
-
-                    if (lc is not null)
+                    string Percentage(string resource, decimal? limit)
                     {
-                        var metrics = mList.Items.Where(p => p.Metadata.Name.StartsWith(d.Metadata.Name)).ToList();
-                        var cUsage = metrics.First().Containers.First().Usage["cpu"].ToDecimal();
-                        cpuUsage = cUsage / lc.ToDecimal();
+                        if (limit is null or <= 0) return "N/A";
+                        decimal total = 0;
+                        foreach (var entry in containers)
+                        {
+                            if (!usage.TryGetValue((entry.Pod, entry.Container.Name), out var values) || !values.TryGetValue(resource, out var value)) return "N/A";
+                            total += value.ToDecimal();
+                        }
+                        return (total / limit.Value).ToString("P2", CultureInfo.InvariantCulture);
                     }
-
-
-                    table.AddRow(d.Metadata.NamespaceProperty, d.Metadata.Name,
-                        $"{memoryUsage:P2}",
-                        $"{cpuUsage:P2}",
-                        d.Spec.Replicas.ToString() ?? "1",
-                        rm?.Value ?? "",
-                        lm?.Value ?? "",
-                        rc?.Value ?? "",
-                        lc?.Value ?? ""
-                    );
-                    ctx.Refresh();
+                    string Amount(decimal? value, bool memory) => value is null ? "N/A" : memory
+                        ? (value.Value / 1048576).ToString("0.##", CultureInfo.InvariantCulture) + " MiB"
+                        : value.Value.ToString("0.###", CultureInfo.InvariantCulture) + " cores";
+                    var lm = Total("memory", true);
+                    var lc = Total("cpu", true);
+                    table.AddRow(Markup.Escape(ns), Markup.Escape(deployment.Metadata.Name),
+                        $"{ownedPods.Count}/{deployment.Spec.Replicas ?? 1}", Percentage("memory", lm), Percentage("cpu", lc),
+                        Amount(Total("memory", false), true), Amount(lm, true), Amount(Total("cpu", false), false), Amount(lc, false));
                 }
             }
+            AnsiConsole.Write(table);
         });
+        return command;
     }
 }

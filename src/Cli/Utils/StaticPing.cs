@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +16,7 @@ public static class StaticPing
     /// <returns></returns>
     public static bool PingIp(IPAddress ip, int ttl = 255, int timeout = 1000)
     {
-        var pingSender = new Ping();
+        using var pingSender = new Ping();
         // 32字节数据
         const string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         var buffer = Encoding.ASCII.GetBytes(data);
@@ -34,7 +34,7 @@ public static class StaticPing
     /// <returns></returns>
     public static PingReply Ping(string url, int ttl = 255, int timeout = 1000)
     {
-        var ping = new Ping();
+        using var ping = new Ping();
         PingOptions pingOptions = new()
         {
             DontFragment = true,
@@ -57,7 +57,7 @@ public static class StaticPing
     /// <returns></returns>
     public static async Task<bool> PingIpAsync(IPAddress ip, int ttl = 255, int timeout = 1000)
     {
-        var pingSender = new Ping();
+        using var pingSender = new Ping();
         // 32字节数据
         const string data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         var buffer = Encoding.ASCII.GetBytes(data);

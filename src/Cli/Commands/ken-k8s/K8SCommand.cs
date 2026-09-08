@@ -1,27 +1,23 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 
 namespace Cli.Commands.ken_k8s;
 
 public static class K8SCommand
 {
-    public static readonly Option<string> ConfigPath = new(
-        new[] { "-c", "--kubeconfig" },
-        "kubeconfig file path"
-    );
+    public static readonly Option<string> ConfigPath = new("--kubeconfig", "-c") { Description = "kubeconfig file path" };
 
-    public static readonly Option<string> ClusterNamespace = new(
-        new[] { "-n", "--namespace" },
-        "specified namespace"
-    );
+    public static readonly Option<string> ClusterNamespace = new("--namespace", "-n") { Description = "specified namespace" };
 
     public static Command GetCommand()
     {
         var command = new Command("k8s", "get k8s resource info");
-        command.AddGlobalOption(ConfigPath);
-        command.AddGlobalOption(ClusterNamespace);
+        ConfigPath.Recursive = true;
+        command.Options.Add(ConfigPath);
+        ClusterNamespace.Recursive = true;
+        command.Options.Add(ClusterNamespace);
 
-        command.AddCommand(GetRestartPod.GetCommand());
-        command.AddCommand(ListUsage.GetCommand());
+        command.Subcommands.Add(GetRestartPod.GetCommand());
+        command.Subcommands.Add(ListUsage.GetCommand());
         return command;
     }
 }

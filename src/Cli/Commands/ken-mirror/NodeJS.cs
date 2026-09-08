@@ -1,52 +1,24 @@
-﻿using System.CommandLine;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
+using System.CommandLine;
 using Cli.Utils;
 
 namespace Cli.Commands.ken_mirror;
 
 public static class NodeJS
 {
-    private static readonly Option<NodeJSMirrorEnum> NpmMirror = new(
-        new[] { "-m", "--mirror" },
-        ()=>NodeJSMirrorEnum.NpmMirror,
-        $"default {NodeJSMirrorEnum.NpmMirror} registry: https://registry.npmmirror.com"
-    );
-
-    private static readonly string CommandName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "npm.cmd" : "npm";
-    
+    private static readonly Option<NodeJSMirrorEnum> NpmMirror = new("--mirror", "-m") { DefaultValueFactory = _ => NodeJSMirrorEnum.NpmMirror };
     public static Command GetCommand()
     {
-        var command = new Command("nodejs", "set nodejs registry")
+        var command = new Command("nodejs", "设置用户级 npm registry") { NpmMirror };
+        command.SetAction(async (result, ct) =>
         {
-            NpmMirror
-        };
-        command.SetHandler(context =>
-        {
-            var npmMirror = context.ParseResult.GetValueForOption(NpmMirror);
-            MyAnsiConsole.MarkupSuccessLine($"使用的npm镜像为 :{npmMirror}");
-            SetNpmMirror(npmMirror);
-            return Task.CompletedTask;
+            if (!Enum.IsDefined(result.GetValue(NpmMirror))) throw new ArgumentException("镜像选项无效。");
+            var path = Environment.GetEnvironmentVariable("NPM_CONFIG_USERCONFIG") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".npmrc");
+            var lines = File.Exists(path) ? (await File.ReadAllLinesAsync(path, ct)).ToList() : [];
+            lines.RemoveAll(line => System.Text.RegularExpressions.Regex.IsMatch(line, @"^\s*registry\s*=", System.Text.RegularExpressions.RegexOptions.IgnoreCase));
+            lines.Add("registry=" + result.GetValue(NpmMirror).ToStringFast(useMetadataAttributes: true));
+            await Create.WriteConfig(path, string.Join(Environment.NewLine, lines) + Environment.NewLine);
+            MyAnsiConsole.MarkupSuccessLine("用户级 npm registry 已保存。");
         });
         return command;
-    }
-
-    private static void SetNpmMirror(NodeJSMirrorEnum nodeJsMirrorEnum)
-    {
-        MyLog.Logger?.Debug("npm名称:{CommandName}", CommandName);
-        
-        var npmPath = Finder.FindCommand(CommandName);
-        if (!string.IsNullOrEmpty(npmPath))
-        {
-            var url = nodeJsMirrorEnum.ToStringFast();
-            SubProcess.Run(npmPath,$"config set registry {url}");
-            MyAnsiConsole.MarkupSuccessLine("验证方法: npm config get registry");
-            // TODO 类似于Node-Sass和disturl 之类的资源
-        }
-        else
-        {
-            MyAnsiConsole.MarkupWarningLine("没有找到npm命令");
-        }
     }
 }

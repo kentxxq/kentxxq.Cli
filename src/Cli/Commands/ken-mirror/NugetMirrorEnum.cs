@@ -1,9 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using NetEscapades.EnumGenerators;
 
 namespace Cli.Commands.ken_mirror;
 
-[EnumExtensions]
+[EnumExtensions(MetadataSource = MetadataSource.DisplayAttribute)]
 public enum NugetMirrorEnum
 {
     [Display(Name = "https://api.nuget.org/v3/index.json")]

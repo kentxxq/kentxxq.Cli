@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.CommandLine;
 using System.Diagnostics;
 using System.IO;
@@ -11,11 +11,7 @@ namespace Cli.Commands.ken_mirror;
 
 public static class DockerHub
 {
-    private static readonly Option<DockerHubMirrorEnum> DockerHubMirror = new(
-        new[] { "-m", "--mirror" },
-        ()=>DockerHubMirrorEnum.NetEase163,
-        $"default {DockerHubMirrorEnum.NetEase163} registry: https://1ocw3lst.mirror.aliyuncs.com"
-    );
+    private static readonly Option<DockerHubMirrorEnum> DockerHubMirror = new("--mirror", "-m") { Description = $"default {DockerHubMirrorEnum.NetEase163} registry: https://hub-mirror.c.163.com", DefaultValueFactory = _ => DockerHubMirrorEnum.NetEase163 };
 
     private static readonly string ConfigPath =
         RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),@".docker\daemon.json") : "/etc/docker/daemon.json";
@@ -28,58 +24,30 @@ public static class DockerHub
         {
             DockerHubMirror
         };
-        command.SetHandler(async context =>
+        command.SetAction(async (context, cancellationToken) =>
         {
-            var dockerHubMirror = context.ParseResult.GetValueForOption(DockerHubMirror);
+            var dockerHubMirror = context.GetValue(DockerHubMirror);
+            if (!Enum.IsDefined(dockerHubMirror)) throw new ArgumentException("镜像选项无效。");
             MyAnsiConsole.MarkupSuccessLine($"使用的dockerHub镜像为 :{dockerHubMirror}");
             await SetDockerhubMirror(dockerHubMirror);
         });
         return command;
     }
 
-    private static async Task SetDockerhubMirror(DockerHubMirrorEnum dockerHubMirrorEnum)
+    private static async Task SetDockerhubMirror(DockerHubMirrorEnum mirror)
     {
-        var mirrorUrl = dockerHubMirrorEnum.ToStringFast();
+        await WriteMirror(ConfigPath, mirror);
+        MyAnsiConsole.MarkupSuccessLine("Docker 镜像配置已保存，请自行重启 Docker。");
+    }
 
-        // 没有配置就创建一个
-        if (!File.Exists(ConfigPath))
-        {
-            await Create.CreateFile(ConfigPath,"{}");
-        }
-
-        // 拿到现有配置
-        var configSteam = File.Open(ConfigPath,FileMode.Open,FileAccess.ReadWrite);
-        using var document = await JsonDocument.ParseAsync(configSteam);
-        configSteam.Close();
-        
-        // 新对象保存数据
-        using var stream = new MemoryStream();
-        await using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
-        writer.WriteStartObject(); // 开始写入对象
-        foreach (var property in document.RootElement.EnumerateObject())
-        {
-            if (property.Name != MirrorFieldName)
-            {
-                property.WriteTo(writer); // 将原有的属性复制到新对象中
-            }
-        }
-        
-        // DockerHubMirrorEnum.Default是空.代表不使用镜像
-        if (dockerHubMirrorEnum != DockerHubMirrorEnum.Default)
-        {
-            writer.WritePropertyName(MirrorFieldName);
-            writer.WriteStartArray();
-            writer.WriteStringValue(mirrorUrl); // 添加一个新属性
-            writer.WriteEndArray();
-            writer.WriteEndObject(); // 结束对象
-        }
-        
-        await writer.FlushAsync();
-        var updatedJsonContent = System.Text.Encoding.UTF8.GetString(stream.ToArray());
-        // 将更新后的 JSON 字符串写回到原始文件中
-        await File.WriteAllTextAsync(ConfigPath, updatedJsonContent);
-        MyAnsiConsole.MarkupSuccessLine($"配置成功,验证查看: {ConfigPath}");
-        MyAnsiConsole.MarkupWarningLine("你应该重启docker生效");
-        
+    internal static async Task WriteMirror(string path, DockerHubMirrorEnum mirror)
+    {
+        var root = File.Exists(path)
+            ? System.Text.Json.Nodes.JsonNode.Parse(await File.ReadAllTextAsync(path)) as System.Text.Json.Nodes.JsonObject
+            : new System.Text.Json.Nodes.JsonObject();
+        if (root is null) throw new InvalidDataException("Docker 配置必须是 JSON 对象。");
+        if (mirror == DockerHubMirrorEnum.Default) root.Remove(MirrorFieldName);
+        else root[MirrorFieldName] = new System.Text.Json.Nodes.JsonArray(mirror.ToStringFast(useMetadataAttributes: true));
+        await Create.WriteConfig(path, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
 }

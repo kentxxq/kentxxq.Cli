@@ -1,139 +1,57 @@
-﻿using System;
 using System.CommandLine;
 using System.Diagnostics;
-using System.IO;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Cli.Utils;
-using Timer = System.Timers.Timer;
 
 namespace Cli.Commands.ken_wp;
 
-public class WebPingCommand
+public static class WebPingCommand
 {
-    /// <summary>
-    /// 需要测试的地址
-    /// </summary>
-    private static readonly Argument<string> Url = new("url", "url: https://www.kentxxq.com");
-
-    private static readonly Option<double> Interval = new(new[] { "-i", "--interval" }, () => 1,
-        "web ping interval seconds");
-
-    private static readonly Option<int> Timeout = new(new[] { "-t", "--timeout" }, () => 2, "default:2 seconds");
-
-    private static readonly Option<bool> DisableKeepAlive =
-        new(new[] { "-d", "--disableKeepAlive" }, () => false, "default: true");
-
-    // 因为会包含多行,单引号,双引号.所以放到文件里才能读取
-    private static readonly Option<FileInfo?> CurlFile = new(new[] { "-f","--curlFile" }, () => null, "if curlFile is not null ,Argument url will be ignore. default: ''");
-
-    private static readonly HttpClient _client = new();
-
-    // private static readonly Stopwatch _stopwatch = new();
-
+    private static readonly Argument<string?> Url = new("url") { Arity = ArgumentArity.ZeroOrOne, Description = "HTTP 地址；使用 -f 时可省略" };
+    private static readonly Option<double> Interval = new("--interval", "-i") { DefaultValueFactory = _ => 1, Description = "请求间隔秒数" };
+    private static readonly Option<int> Timeout = new("--timeout", "-t") { DefaultValueFactory = _ => 2, Description = "请求超时秒数" };
+    private static readonly Option<bool> DisableKeepAlive = new("--disableKeepAlive", "-d") { Description = "关闭连接复用，默认 false" };
+    private static readonly Option<FileInfo?> CurlFile = new("--curlFile", "-f") { Description = "从 curl 文件读取请求" };
 
     public static Command GetCommand()
     {
-        var command = new Command("wp", "web ping")
+        var command = new Command("wp", "持续检查 HTTP 响应") { Url, Interval, Timeout, DisableKeepAlive, CurlFile };
+        command.SetAction(async (result, ct) =>
         {
-            Url,
-            Interval,
-            Timeout,
-            DisableKeepAlive,
-            CurlFile
-        };
-        command.SetHandler(async context =>
-        {
-            var url = context.ParseResult.GetValueForArgument(Url);
-            var interval = context.ParseResult.GetValueForOption(Interval);
-            var timeout = context.ParseResult.GetValueForOption(Timeout);
-            var disableKeepAlive = context.ParseResult.GetValueForOption(DisableKeepAlive);
-            var curlFile = context.ParseResult.GetValueForOption(CurlFile);
-            
-            if (disableKeepAlive)
+            var interval = result.GetValue(Interval);
+            var timeout = result.GetValue(Timeout);
+            if (!double.IsFinite(interval) || interval <= 0 || interval > int.MaxValue / 1000 || timeout <= 0)
+                throw new ArgumentException("间隔和超时必须为有效正数。");
+            var curl = await HttpTools.ReadCurlFile(result.GetValue(CurlFile), ct);
+            using var client = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
+            using var validation = await HttpTools.CreateRequest(result.GetValue(Url), curl);
+            while (true)
             {
-                _client.DefaultRequestHeaders.ConnectionClose = true;
+                ct.ThrowIfCancellationRequested();
+                using var request = await HttpTools.CreateRequest(result.GetValue(Url), curl);
+                request.Headers.ConnectionClose = result.GetValue(DisableKeepAlive);
+                using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                deadline.CancelAfter(TimeSpan.FromSeconds(timeout));
+                var watch = Stopwatch.StartNew();
+                try
+                {
+                    using var response = await client.SendAsync(request, deadline.Token);
+                    var message = $"{DateTime.Now:HH:mm:ss.fff} {(int)response.StatusCode}，耗时 {watch.ElapsedMilliseconds}ms";
+                    if (response.IsSuccessStatusCode) MyAnsiConsole.MarkupSuccessLine(message);
+                    else MyAnsiConsole.MarkupWarningLine(message);
+                    MyLog.Logger?.Debug("HTTP 状态码：{StatusCode}", (int)response.StatusCode);
+                }
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                {
+                    MyAnsiConsole.MarkupErrorLine($"请求超时，耗时 {watch.ElapsedMilliseconds}ms");
+                }
+                catch (HttpRequestException)
+                {
+                    MyAnsiConsole.MarkupErrorLine($"请求失败，耗时 {watch.ElapsedMilliseconds}ms");
+                }
+                // 请求不重叠；间隔从本次请求结束开始计算。
+                await Task.Delay(TimeSpan.FromSeconds(interval), ct);
             }
-            await Run(url, interval, timeout,curlFile);
-            Console.ReadKey();
         });
         return command;
-    }
-
-    private static async Task Run(string url, double interval, int timeout,FileInfo? curlFile)
-    {
-        // Console.WriteLine(String.Concat(Enumerable.Repeat("=", 50)));
-        // var rule = new Rule("ken-wp");
-        // rule.Alignment = Justify.Left;
-        // rule.RuleStyle("red dim");
-        // AnsiConsole.Write(rule);
-
-        HttpRequestMessage? request;
-        var curlCommand = string.Empty;
-        if (curlFile is not null && curlFile.Exists)
-        {
-            curlCommand = await File.ReadAllTextAsync(curlFile.FullName);
-        }
-        
-        var timer = new Timer(interval * 1000);
-        timer.AutoReset = true;
-        timer.Elapsed += async (sender, e) =>
-        {
-            if (!string.IsNullOrEmpty(curlCommand))
-            {
-                request = await HttpTools.CurlToHttpRequestMessage(curlCommand);
-                if (request is null)
-                {
-                    MyAnsiConsole.MarkupErrorLine("curl parse error!");
-                    return;
-                }
-            }
-            else
-            {
-                request = new HttpRequestMessage(HttpMethod.Get, url);
-            }
-            // 非整数不显示毫秒
-            await SendRequest(request, timeout,interval % 1!=0);
-        };
-        timer.Enabled = true;
-    }
-
-    private static async Task SendRequest(HttpRequestMessage httpRequestMessage, int timeout,bool showMilliseconds)
-    {
-        var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromSeconds(timeout));
-        var stopWatch = new Stopwatch();
-        try
-        {
-            stopWatch.Start();
-            var httpResponseMessage = await _client.SendAsync(httpRequestMessage,cts.Token);
-            if (httpResponseMessage.IsSuccessStatusCode)
-            {
-                MyLog.Logger?.Debug("请求成功");
-                MyLog.Logger?.Debug(await HttpTools.HttpResponseMessageToString(httpResponseMessage));
-            }
-            
-            MyAnsiConsole.MarkupSuccess(
-                $"{(showMilliseconds?DateTime.Now.ToString("hh:mm:ss.fff"):DateTime.Now.ToString("hh:mm:ss"))},{httpRequestMessage.RequestUri}: {stopWatch.ElapsedMilliseconds}ms ");
-            if (httpResponseMessage.IsSuccessStatusCode)
-            {
-                MyAnsiConsole.MarkupSuccessLine($"{(int)httpResponseMessage.StatusCode}-{httpResponseMessage.StatusCode}");
-            }
-            else
-            {
-                MyAnsiConsole.MarkupWarningLine($"{(int)httpResponseMessage.StatusCode}-{httpResponseMessage.StatusCode}");
-            }
-        }
-        catch (Exception e)
-        {
-            MyAnsiConsole.MarkupErrorLine(
-                $"{(showMilliseconds?DateTime.Now.ToString("hh:mm:ss.fff"):DateTime.Now.ToString("hh:mm:ss"))},err: {e.Message} {stopWatch.ElapsedMilliseconds}ms");
-        }
-        finally
-        {
-            stopWatch.Stop();
-            stopWatch.Reset();
-        }
     }
 }

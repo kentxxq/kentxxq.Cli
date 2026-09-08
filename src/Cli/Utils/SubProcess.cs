@@ -1,23 +1,26 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace Cli.Utils;
 
-public class SubProcess
+public static class SubProcess
 {
-    public static void Run(string file,string args)
+    public static string Run(string file, params string[] arguments)
     {
-        MyAnsiConsole.MarkupSuccessLine($"执行命令:{file} {args}");
-        var process = Process.Start(file,args);
-        process.WaitForExit();
-        if (process.ExitCode == 0)
+        var info = new ProcessStartInfo(file) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
+        foreach (var argument in arguments) info.ArgumentList.Add(argument);
+        using var process = Process.Start(info) ?? throw new InvalidOperationException("无法启动外部命令。");
+        try
         {
-            MyAnsiConsole.MarkupSuccessLine("执行成功");
+            var output = process.StandardOutput.ReadToEndAsync();
+            var error = process.StandardError.ReadToEndAsync();
+            if (!process.WaitForExit(30000)) throw new TimeoutException("外部命令超时。");
+            Task.WhenAll(output, error).GetAwaiter().GetResult();
+            if (process.ExitCode != 0) throw new InvalidOperationException($"外部命令失败，退出码 {process.ExitCode}。");
+            return output.Result.Trim();
         }
-        else
+        finally
         {
-            MyAnsiConsole.MarkupErrorLine("执行失败");
+            if (!process.HasExited) { process.Kill(true); process.WaitForExit(); }
         }
-        MyLog.Logger?.Debug("退出状态码:{ProcessExitCode}", process.ExitCode);
-        MyLog.Logger?.Debug("退出时间:{ProcessExitTime}", process.ExitTime);
     }
 }
